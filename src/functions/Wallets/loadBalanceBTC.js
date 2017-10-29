@@ -1,12 +1,11 @@
-export async function loadBalanceBTC (address) {
+export default async function loadBalanceBTC (address) {
+//   const url = 'https://api.BTCplorer.io/getAddressInfo/' + address
+  const url = 'https://blockchain.info/q/addressbalance/' + address + '?confirmations=6'
+  const response = await fetch(url, {})
+  const json = await response.json()
 
-    const url = 'https://api.BTCplorer.io/getAddressInfo/' + address
-    const response = await fetch(url, {});
-    const json = await response.json();
+  var balance = {}
+  balance['BTC'] = json * Math.pow(10, -8) // From satoshi to bitcoin
 
-    var balance = {}
-    balance['BTC'] = json['BTC']['balance']
-
-    return balance
-};
-
+  return balance
+}

@@ -1,6 +1,8 @@
 <template>
   <div id="settings">
     <p>Enter API keys for exchanges and public keys for cryptocurrencies held in your own wallets</p>
+    <p>For Bitcoin: export xpub key using your wallet software. Does not work with Segwit (yet?)</p>
+    <p>Ark not implemented yet</p>
     <table>
       <tbody>
         <tr>
@@ -105,8 +107,8 @@ export default {
       this.exchangeKeys = loadExchangeKeys()
     },
     sync () {
-      loadBalancesFromWallets(this.walletKeys)
-      loadBalancesFromExchanges(this.exchangeKeys)
+      loadBalancesFromWallets(this.walletKeys).then(r => alert('Loaded balances from wallets'))
+      loadBalancesFromExchanges(this.exchangeKeys).then(r => alert('Loaded balances from exchanges'))
     },
     capitalizeFirstLetter (string) {
       return string.charAt(0).toUpperCase() + string.slice(1)

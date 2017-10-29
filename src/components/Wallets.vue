@@ -9,7 +9,7 @@
         <tr>
           <td v-for="(blockchain, name) in walletBalances">
             <ul v-for="(balances, address) in blockchain">
-              <span class="address">{{address}}</span>
+              <span :title="address" class="address">{{address | trimString(25)}}</span>
               <tr v-for="(balance, token) in balances">
                 <td>{{token}} </td><td>{{balance}}</td>
               </tr>
@@ -35,6 +35,15 @@ export default {
     },
     capitalizeFirstLetter: function (string) {
       return string.charAt(0).toUpperCase() + string.slice(1)
+    },
+    trimString: function (str, maxStrLength) {
+      var trimStr
+      if (str.length > maxStrLength) {
+        trimStr = str.substring(0, maxStrLength) + '...'
+      } else {
+        trimStr = str
+      }
+      return trimStr
     }
   }
 }

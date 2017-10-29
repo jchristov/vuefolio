@@ -1,6 +1,6 @@
 <template>
   <div id="portfoliotable">
-    <h1> Total Value of Portfolio: {{totalValue | round(0)}} {{currency}} </h1>
+    <h1> Total Value of Portfolio: {{totalValue | round(2)}} {{currency}} </h1>
     <table>
       <tbody>
         <tr>
