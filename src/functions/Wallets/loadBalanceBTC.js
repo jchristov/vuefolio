@@ -1,6 +1,6 @@
 export default async function loadBalanceBTC (address) {
 //   const url = 'https://api.BTCplorer.io/getAddressInfo/' + address
-  const url = 'https://blockchain.info/q/addressbalance/' + address + '?confirmations=6'
+  const url = 'https://cors-anywhere.herokuapp.com/https://blockchain.info/q/addressbalance/' + address + '?confirmations=6'
   const response = await fetch(url, {})
   const json = await response.json()
 

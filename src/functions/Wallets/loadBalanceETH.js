@@ -1,5 +1,5 @@
 export default async function loadBalanceETH (address) {
-  const url = 'https://api.ethplorer.io/getAddressInfo/' + address + '?apiKey=freekey'
+  const url = 'https://cors-anywhere.herokuapp.com/https://api.ethplorer.io/getAddressInfo/' + address + '?apiKey=freekey'
   const response = await fetch(url, {})
   const json = await response.json()
   var balance = {}
