@@ -1,21 +1,36 @@
 <template>
   <div id="settings">
-    <p>Enter API keys for exchanges and public keys for cryptocurrencies held in your own wallets</p>
-    <p>For Bitcoin: export xpub key using your wallet software. Does not work with Segwit (yet?)</p>
-    <p>Ark not implemented yet</p>
+    <p>
+      <i :class="myIcon" aria-hidden="true" v-on:click="sync"></i>
+      <span>&nbsp&nbsp&nbsp</span>
+      <i class="fa fa-trash-o fa-2x" aria-hidden="true" v-on:click="clearKeys"></i>
+    </p>
     <table>
       <tbody>
+        <!-- <tr><td colspan="4"><h2>Supported Exchanges</h2></td></tr> -->
         <tr>
-          <th v-for="item in exchangeKeys">
+          <th v-for="item in exchangeKeys.slice(0,4)">
               <p>{{capitalizeFirstLetter(item.name)}}</p>
           </th>
         </tr>
         <tr>
-          <td v-for="item in exchangeKeys">
-              <input class="input" type="text" placeholder="Enter API Key" v-model="item.apiKey" v-on:change="changeExchangeKey">
-              <input class="input" type="text" placeholder="Enter API Secret" v-model="item.apiSecret" v-on:change="changeExchangeKey">
+          <td v-for="item in exchangeKeys.slice(0,4)">
+            <input class="input" type="text" placeholder="Enter API Key" v-model="item.apiKey" v-on:change="changeExchangeKey">
+            <input class="input" type="text" placeholder="Enter API Secret" v-model="item.apiSecret" v-on:change="changeExchangeKey">
           </td>
         </tr>
+        <tr>
+          <th v-for="item in exchangeKeys.slice(4,8)">
+              <p>{{capitalizeFirstLetter(item.name)}}</p>
+          </th>
+        </tr>
+        <tr>
+          <td v-for="item in exchangeKeys.slice(4,8)">
+            <input class="input" type="text" placeholder="Enter API Key" v-model="item.apiKey" v-on:change="changeExchangeKey">
+            <input class="input" type="text" placeholder="Enter API Secret" v-model="item.apiSecret" v-on:change="changeExchangeKey">
+          </td>
+        </tr>
+        <!-- <tr><td colspan="4"><h2>Supported Wallets</h2></td></tr> -->
         <tr>
           <th vertical-align="top" v-for="wallet in walletKeys">
               <p>{{capitalizeFirstLetter(wallet.name)}}</p>
@@ -32,14 +47,20 @@
         </tr>
       </tbody>
     </table>
-    <button v-on:click="clearKeys">Clear</button>
-    <button v-on:click="sync">Synchronize</button>
+
+    <h3>Instructions</h3>
+      <p>Enter API keys for exchanges and public keys for cryptocurrencies held in your own wallets and press the sync button</p>
+      <p>Then go back to "Portfolio"</p>
+      <p>For Bitcoin: export xpub key using your wallet software. Does not work with Segwit (yet?)</p>
+      <p>For Ethereum: all ERC20 token balances are loaded as well</p>
+      <p>Ark not implemented yet</p>
+    </p>
   </div>
 </template>
 
 <script>
 
-import loadBalancesFromWallets from '../functions/loadBalancesFromWallets.js'
+// import loadBalancesFromWallets from '../functions/loadBalancesFromWallets.js'
 import loadBalancesFromExchanges from '../functions/loadBalancesFromExchanges.js'
 
 function loadExchangeKeys () {
@@ -79,6 +100,7 @@ export default {
   name: 'settings',
   data () {
     return {
+      myIcon: 'fa fa-refresh fa-2x',
       exchangeKeys: loadExchangeKeys(),
       walletKeys: loadWalletKeys()
     }
@@ -108,11 +130,18 @@ export default {
       this.exchangeKeys = loadExchangeKeys()
     },
     sync () {
-      loadBalancesFromWallets(this.walletKeys).then(r => alert('Loaded balances from wallets'))
-      loadBalancesFromExchanges(this.exchangeKeys).then(r => alert('Loaded balances from exchanges'))
+      this.startRotating()
+      var stopRotating = this.stopRotating
+      loadBalancesFromExchanges(this.exchangeKeys).then(r => stopRotating())
     },
     capitalizeFirstLetter (string) {
       return string.charAt(0).toUpperCase() + string.slice(1)
+    },
+    startRotating () {
+      this.myIcon = 'fa fa-spin fa-refresh fa-2x'
+    },
+    stopRotating () {
+      this.myIcon = 'fa fa-refresh fa-2x'
     }
   }
 }
@@ -126,6 +155,11 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+
+ul{
+  width: 40%;
+  text-align: center;
 }
 
 table{
@@ -151,4 +185,7 @@ tr {
   color: #42b983;
 }
 
+.fa:hover {
+    color: #42b983;
+}
 </style>

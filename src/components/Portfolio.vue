@@ -1,6 +1,11 @@
 <template>
   <div class="hello">
-    <button @click="switchCurrency">Switch Currency</button>
+    <p>Switch currency:
+      <button @click="(event) => { switchCurrency(event, 'BTC') }">Ƀ</button>
+      <button @click="(event) => { switchCurrency(event, 'ETH') }">Ξ</button>
+      <button @click="(event) => { switchCurrency(event, 'EUR') }">€</button>
+      <button @click="(event) => { switchCurrency(event, 'USD') }">$</button>
+    </p>
     <PortfolioTable :portfolio="portfolio" :rates="exchangeRates" :currency="currency"/>
   </div>
 </template>
@@ -10,6 +15,13 @@ import combineBalances from '../functions/combineBalances.js'
 import requestExchangeRates from '../functions/requestExchangeRates.js'
 import PortfolioTable from './PortfolioTable'
 
+var initialCurrency
+if (localStorage.preferredCurrency) {
+  initialCurrency = localStorage.preferredCurrency
+} else {
+  initialCurrency = 'BTC'
+}
+
 export default {
   name: 'HelloWorld',
   data () {
@@ -17,7 +29,7 @@ export default {
       walletBalances: JSON.parse(localStorage.getItem('walletBalances')),
       exchangeBalances: JSON.parse(localStorage.getItem('exchangeBalances')),
       currencies: ['EUR', 'BTC', 'ETH', 'USD'],
-      currency: 'ETH'
+      currency: initialCurrency
     }
   },
   computed: {
@@ -47,9 +59,9 @@ export default {
     PortfolioTable
   },
   methods: {
-    switchCurrency: function () {
-      var index = this.currencies.findIndex(cur => (cur === this.currency))
-      this.currency = this.currencies[(index + 1) % 4]
+    switchCurrency (event, cur) {
+      this.currency = cur
+      localStorage.setItem('preferredCurrency', cur)
     }
   }
 

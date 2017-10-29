@@ -7,7 +7,7 @@ import VueRouter from 'vue-router'
 // import the thing to use asynchronous computed properties
 import AsyncComputed from 'vue-async-computed'
 // tell vue to use the router
-import HelloWorld from './components/HelloWorld'
+import Portfolio from './components/Portfolio'
 import Wallets from './components/Wallets'
 import Exchanges from './components/Exchanges'
 import Settings from './components/Settings'
@@ -16,7 +16,7 @@ Vue.use(VueRouter) // We imported the router plugin, now we need to tell Vue to 
 Vue.use(AsyncComputed)
 
 const routes = [
-{ path: '/', component: HelloWorld },
+{ path: '/', component: Portfolio },
 { path: '/wallets', component: Wallets },
 { path: '/exchanges', component: Exchanges },
 { path: '/settings', component: Settings, props: { test: localStorage.test } }
