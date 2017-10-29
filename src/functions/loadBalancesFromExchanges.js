@@ -25,12 +25,11 @@ export default async function loadBalancesFromExchanges (exchangeKeys) {
   console.log(ids)
 
   await Promise.all(ids.map(async id => {
-    // instantiate the exchange
     let exchange = new ccxt[id](exchangeKeysFormatted[id])
-    // exchanges[id] = exchange
 
     if (exchange.apiKey) {
       let balance = await exchange.fetchBalance()
+      console.log(exchange)
       exchangeBalances[id] = {}
 
       for (let token in balance['total']) {

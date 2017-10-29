@@ -52,7 +52,8 @@ function loadExchangeKeys () {
       {'name': 'bittrex', 'apiKey': '', 'apiSecret': ''},
       {'name': 'liqui', 'apiKey': '', 'apiSecret': ''},
       {'name': 'coinbase', 'apiKey': '', 'apiSecret': ''},
-      {'name': 'bl3p', 'apiKey': '', 'apiSecret': ''}
+      {'name': 'bl3p', 'apiKey': '', 'apiSecret': ''},
+      {'name': 'bitfinex', 'apiKey': '', 'apiSecret': ''}
     ]
   }
   return exchangeKeys

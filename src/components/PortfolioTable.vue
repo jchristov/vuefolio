@@ -1,17 +1,18 @@
 <template>
   <div id="portfoliotable">
     <h1> Total Value of Portfolio: {{totalValue | round(2)}} {{currency}} </h1>
+    <h1> €, $, Ξ, B</h1>
     <table>
       <tbody>
         <tr>
-          <th>Name</th>
+          <th class="str">Name</th>
           <th class="nr">Price in {{currency}}</th>
           <th class="nr">Balance</th>
           <th class="nr">Value in {{currency}}</th>
           <th class="nr">24h% Change</th>
         </tr>
         <tr v-if="!(rates === null)" v-for="balance,token,index in portfolio">
-          <td>{{token}}</td>
+          <td class="str">{{token}}</td>
           <td class="nr">{{rates[token][currency]['rate'] | round(5)}}</td>
           <td class="nr">{{balance | round(3) }}</td>
           <td class="nr">{{balance * rates[token][currency]['rate'] | round(2) }}</td>
@@ -72,6 +73,10 @@ table{
   margin: auto;
   width: 40%;
   vertical-align: top;
+}
+
+.str {
+  text-align: left;
 }
 
 .nr {
