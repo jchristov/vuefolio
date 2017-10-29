@@ -28,9 +28,7 @@ export default async function loadBalancesFromExchanges (exchangeKeys) {
     let exchange = new ccxt[id](exchangeKeysFormatted[id])
 
     if (exchange.apiKey) {
-      let balance = await exchange.fetch_open_orders()
-      console.log(balance)
-      console.log(exchange)
+      let balance = await exchange.fetchBalance()
       exchangeBalances[id] = {}
 
       for (let token in balance['total']) {
