@@ -24,8 +24,8 @@ export default {
   margin-top: 60px;
 }
 
-  a:visited { text-decoration: none; color:black; }
-  a:hover { text-decoration: none; color:black; }
-  a:focus { text-decoration: none; color:black; }
-  a:hover, a:active { text-decoration: none; color:black }
+a:visited { text-decoration: none; color:black; }
+a:hover { text-decoration: none; color:black; }
+a:focus { text-decoration: none; color:black; }
+a:hover, a:active { text-decoration: none; color:black }
 </style>

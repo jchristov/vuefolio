@@ -1,12 +1,24 @@
 <template>
   <div class="hello">
-    <p>Switch currency:
-      <button @click="(event) => { switchCurrency(event, 'BTC') }">Ƀ</button>
-      <button @click="(event) => { switchCurrency(event, 'ETH') }">Ξ</button>
-      <button @click="(event) => { switchCurrency(event, 'EUR') }">€</button>
-      <button @click="(event) => { switchCurrency(event, 'USD') }">$</button>
-    </p>
-    <PortfolioTable :portfolio="portfolio" :rates="exchangeRates" :currency="currency"/>
+    <span v-if="(portfolio !== null)">
+      <p>Switch currency:
+        <button @click="(event) => { switchCurrency(event, 'BTC') }">Ƀ</button>
+        <button @click="(event) => { switchCurrency(event, 'ETH') }">Ξ</button>
+        <button @click="(event) => { switchCurrency(event, 'EUR') }">€</button>
+        <button @click="(event) => { switchCurrency(event, 'USD') }">$</button>
+      </p>
+      <PortfolioTable :portfolio="portfolio" :rates="exchangeRates" :currency="currency"/>
+      
+      <span id="footer">
+        <br>If you enjoy using this web app, please consider donating.
+        <br>
+        <br>BTC: 3BUo1JcBpbG4JuG1QaPqCoPtDzPtGhh
+        <br>ETH: 0x4cf2E9f6DBAd97Fd901568D37Bb7EfAE2F4f3
+      </span>
+    </span>
+    <span v-else>
+      <p>Hi. Go to Settings</p>
+    </span>
   </div>
 </template>
 
@@ -23,7 +35,7 @@ if (localStorage.preferredCurrency) {
 }
 
 export default {
-  name: 'HelloWorld',
+  name: 'Portfolio',
   data () {
     return {
       walletBalances: JSON.parse(localStorage.getItem('walletBalances')),
@@ -34,15 +46,20 @@ export default {
   },
   computed: {
     portfolio: function () {
-      return combineBalances(this.walletBalances, this.exchangeBalances)
+      if (this.walletBalances || this.exchangeBalances) {
+        return combineBalances(this.walletBalances, this.exchangeBalances)
+      } else {
+        return null
+      }
     }
   },
   asyncComputed: {
     exchangeRates: {
       get () {
-        var rates = requestExchangeRates(Object.keys(this.portfolio))
-        console.log(rates)
-        return rates
+        if (this.portfolio !== null) {
+          var rates = requestExchangeRates(Object.keys(this.portfolio))
+          return rates
+        }
       },
       default: null
     }
@@ -86,5 +103,15 @@ li {
 
 a {
   color: #42b983;
+}
+
+#footer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 1rem;
+  background-color: #efefef;
+  text-align: center;
 }
 </style>

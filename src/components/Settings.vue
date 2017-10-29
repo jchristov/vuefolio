@@ -60,7 +60,7 @@
 
 <script>
 
-// import loadBalancesFromWallets from '../functions/loadBalancesFromWallets.js'
+import loadBalancesFromWallets from '../functions/loadBalancesFromWallets.js'
 import loadBalancesFromExchanges from '../functions/loadBalancesFromExchanges.js'
 
 function loadExchangeKeys () {
@@ -126,12 +126,15 @@ export default {
     clearKeys () {
       localStorage.removeItem('exchangeKeys')
       localStorage.removeItem('walletKeys')
+      localStorage.removeItem('exchangeBalances')
+      localStorage.removeItem('walletBalances')
       this.walletKeys = loadWalletKeys()
       this.exchangeKeys = loadExchangeKeys()
     },
     sync () {
       this.startRotating()
       var stopRotating = this.stopRotating
+      loadBalancesFromWallets(this.walletKeys).then(r => stopRotating())
       loadBalancesFromExchanges(this.exchangeKeys).then(r => stopRotating())
     },
     capitalizeFirstLetter (string) {

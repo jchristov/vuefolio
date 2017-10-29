@@ -5,15 +5,15 @@
       <tbody>
         <tr>
           <th class="str">Name</th>
-          <th class="nr">Price in {{currency}}</th>
           <th class="nr">Balance</th>
+          <th class="nr">Price in {{currency}}</th>
           <th class="nr">Value in {{currency}}</th>
           <th class="nr">24h% Change</th>
         </tr>
         <tr v-if="!(rates === null)" v-for="balance,token,index in portfolio">
           <td class="str">{{token}}</td>
-          <td class="nr">{{rates[token][currency]['rate'] | round(5)}}</td>
           <td class="nr">{{balance | round(3) }}</td>
+          <td class="nr">{{rates[token][currency]['rate'] | round(5)}}</td>
           <td class="nr">{{balance * rates[token][currency]['rate'] | round(2) }}</td>
 
           <td v-if="rates[token][currency]['change'] > 0.0" class="nrpos">{{rates[token][currency]['change'] | round(2) }}</td>
