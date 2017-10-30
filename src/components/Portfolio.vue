@@ -10,10 +10,9 @@
       <PortfolioTable :portfolio="portfolio" :rates="exchangeRates" :currency="currency"/>
       
       <span id="footer">
-        <br>If you enjoy using this web app, please consider donating.
-        <br>
-        <br>BTC: 3BUo1JcBpbG4JuG1QaPqCoPtDzPtGhh
-        <br>ETH: 0x4cf2E9f6DBAd97Fd901568D37Bb7EfAE2F4f3
+        If you enjoy using this web app, please consider donating. 
+        BTC: 3BUo1JcBpbG4JuG1QaPqCoPtDzPtGhh 
+        ETH: 0x4cf2E9f6DBAd97Fd901568D37Bb7EfAE2F4f3
       </span>
     </span>
     <span v-else>

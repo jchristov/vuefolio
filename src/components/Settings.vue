@@ -29,6 +29,7 @@
             <input class="input" type="text" placeholder="Enter API Key" v-model="item.apiKey" v-on:change="changeExchangeKey">
             <input class="input" type="text" placeholder="Enter API Secret" v-model="item.apiSecret" v-on:change="changeExchangeKey">
           </td>
+          <td> <i class="fa fa-plus-circle fa-2x" aria-hidden="true"></i> </td>
         </tr>
         <!-- <tr><td colspan="4"><h2>Supported Wallets</h2></td></tr> -->
         <tr>
@@ -60,8 +61,9 @@
 
 <script>
 
-import loadBalancesFromWallets from '../functions/loadBalancesFromWallets.js'
-import loadBalancesFromExchanges from '../functions/loadBalancesFromExchanges.js'
+import loadBalances from '../functions/loadBalances.js'
+// import loadBalancesFromWallets from '../functions/loadBalancesFromWallets.js'
+// import loadBalancesFromExchanges from '../functions/loadBalancesFromExchanges.js'
 
 function loadExchangeKeys () {
   let exchangeKeys
@@ -74,7 +76,8 @@ function loadExchangeKeys () {
       {'name': 'liqui', 'apiKey': '', 'apiSecret': ''},
       {'name': 'coinbase', 'apiKey': '', 'apiSecret': ''},
       {'name': 'bl3p', 'apiKey': '', 'apiSecret': ''},
-      {'name': 'bitfinex', 'apiKey': '', 'apiSecret': ''}
+      {'name': 'bitfinex', 'apiKey': '', 'apiSecret': ''},
+      {'name': 'poloniex', 'apiKey': '', 'apiSecret': ''}
     ]
   }
   return exchangeKeys
@@ -133,9 +136,10 @@ export default {
     },
     sync () {
       this.startRotating()
-      var stopRotating = this.stopRotating
-      loadBalancesFromWallets(this.walletKeys).then(r => stopRotating())
-      loadBalancesFromExchanges(this.exchangeKeys).then(r => stopRotating())
+      // var stopRotating = this.stopRotating
+      loadBalances(this.walletKeys, this.exchangeKeys).then(r => this.stopRotating())
+      // loadBalancesFromWallets(this.walletKeys).then(r => stopRotating())
+      // loadBalancesFromExchanges(this.exchangeKeys).then(r => stopRotating())
     },
     capitalizeFirstLetter (string) {
       return string.charAt(0).toUpperCase() + string.slice(1)

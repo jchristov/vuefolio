@@ -10,5 +10,10 @@ export default async function loadBalanceETH (address) {
     let symbol = token['tokenInfo']['symbol']
     balance[symbol] = token['balance'] * Math.pow(10, -18)
   }
+
+  // Somehow MOD is fucked
+  if (balance.hasOwnProperty('MOD')) {
+    balance['MOD'] *= Math.pow(10, 18)
+  }
   return balance
 };

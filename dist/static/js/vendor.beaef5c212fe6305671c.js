@@ -22582,10 +22582,11 @@ var bitfinex = {
     async fetchBalance (params = {}) {
         await this.loadMarkets ();
         let balances = await this.privatePostBalances ();
+        console.log(balances)
         let result = { 'info': balances };
         for (let i = 0; i < balances.length; i++) {
             let balance = balances[i];
-            if (balance['type'] == 'exchange') {
+            if (balance['type'] == 'deposit') {
                 let currency = balance['currency'];
                 let uppercase = currency.toUpperCase ();
                 uppercase = this.commonCurrencyCode (uppercase);
@@ -46685,4 +46686,4 @@ __webpack_require__("vIB/")(String, 'String', function (iterated) {
 /***/ })
 
 });
-//# sourceMappingURL=vendor.b0d64e7fe9bd72db5d45.js.map
+//# sourceMappingURL=vendor.beaef5c212fe6305671c.js.map
