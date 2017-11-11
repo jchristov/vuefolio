@@ -11,7 +11,7 @@
       <tr>
         <td v-for="(exchange, name) in exchangeBalances">
           <tr v-for="(balance,token) in exchange">
-              <td>{{token}}</td><td>{{balance}}</td>
+              <td>{{token}}</td><td>{{balance | round(6)}}</td>
           </tr>
         </td>
       </tr>
@@ -34,6 +34,9 @@ export default {
     },
     capitalizeFirstLetter: function (string) {
       return string.charAt(0).toUpperCase() + string.slice(1)
+    },
+    round: function (value, decimals) {
+      return value.toFixed(decimals)
     }
   }
 }

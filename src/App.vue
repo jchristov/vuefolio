@@ -3,6 +3,7 @@
   <router-link v-bind:to="'/'">Portfolio</router-link>
   <router-link v-bind:to="'/wallets'">Wallets</router-link>
   <router-link v-bind:to="'/exchanges'">Exchanges</router-link>
+  <router-link v-bind:to="'/manual'">Manual Entry</router-link>
   <router-link v-bind:to="'/settings'">Settings</router-link>
   <router-view></router-view>
   </div>

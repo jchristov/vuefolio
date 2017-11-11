@@ -15,5 +15,9 @@ export default async function loadBalanceETH (address) {
   if (balance.hasOwnProperty('MOD')) {
     balance['MOD'] *= Math.pow(10, 18)
   }
+  // Somehow RHOC is fucked
+  if (balance.hasOwnProperty('RHOC')) {
+    balance['RHOC'] *= Math.pow(10, 10)
+  }
   return balance
 };

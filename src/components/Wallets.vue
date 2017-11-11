@@ -11,7 +11,7 @@
             <ul v-for="(balances, address) in blockchain">
               <span :title="address" class="address">{{address | trimString(25)}}</span>
               <tr v-for="(balance, token) in balances">
-                <td>{{token}} </td><td>{{balance}}</td>
+                <td>{{token}} </td><td>{{balance | round(6)}}</td>
               </tr>
             </ul>
           </td>
@@ -44,6 +44,9 @@ export default {
         trimStr = str
       }
       return trimStr
+    },
+    round: function (value, decimals) {
+      return value.toFixed(decimals)
     }
   }
 }

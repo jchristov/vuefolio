@@ -8,11 +8,10 @@
         <button @click="(event) => { switchCurrency(event, 'USD') }">$</button>
       </p>
       <PortfolioTable :portfolio="portfolio" :rates="exchangeRates" :currency="currency"/>
-      
       <span id="footer">
         If you enjoy using this web app, please consider donating. 
-        BTC: 3BUo1JcBpbG4JuG1QaPqCoPtDzPtGhh 
-        ETH: 0x4cf2E9f6DBAd97Fd901568D37Bb7EfAE2F4f3
+        <i class="cc BTC"></i>3BUo1JcBpbG4JuG1QaPqCoPtDzPtGhh 
+        <i class="cc ETH"></i>ETH: 0x4cf2E9f6DBAd97Fd901568D37Bb7EfAE2F4f3
       </span>
     </span>
     <span v-else>
@@ -39,6 +38,7 @@ export default {
     return {
       walletBalances: JSON.parse(localStorage.getItem('walletBalances')),
       exchangeBalances: JSON.parse(localStorage.getItem('exchangeBalances')),
+      manualBalances: JSON.parse(localStorage.getItem('manualBalances')),
       currencies: ['EUR', 'BTC', 'ETH', 'USD'],
       currency: initialCurrency
     }
@@ -46,7 +46,7 @@ export default {
   computed: {
     portfolio: function () {
       if (this.walletBalances || this.exchangeBalances) {
-        return combineBalances(this.walletBalances, this.exchangeBalances)
+        return combineBalances(this.walletBalances, this.exchangeBalances, this.manualBalances)
       } else {
         return null
       }

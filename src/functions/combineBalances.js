@@ -1,4 +1,4 @@
-export default function combineBalances (wallets, exchanges) {
+export default function combineBalances (wallets, exchanges, manual) {
   // Input: jsons that contain balances for exchanges and wallets separately
   // Output: json that contains the combined balance for each token
   var combined = {}
@@ -49,6 +49,21 @@ export default function combineBalances (wallets, exchanges) {
             )
           }
       )
+    }
+  )
+
+// Add balances from manual entries
+// manual json looks like this:
+// manual = [{'description': '..', 'token': '...', 'balance': '...'}]
+  Object.entries(manual).forEach(
+    (entry) => {
+      if (entry[1].token !== '') {
+        if (combined.hasOwnProperty(entry[1].token)) {
+          combined[entry[1].token] += parseFloat(entry[1].balance)
+        } else {
+          combined[entry[1].token] = parseFloat(entry[1].balance)
+        }
+      }
     }
   )
   return combined

@@ -29,7 +29,7 @@
             <input class="input" type="text" placeholder="Enter API Key" v-model="item.apiKey" v-on:change="changeExchangeKey">
             <input class="input" type="text" placeholder="Enter API Secret" v-model="item.apiSecret" v-on:change="changeExchangeKey">
           </td>
-          <td> <i class="fa fa-plus-circle fa-2x" aria-hidden="true"></i> </td>
+          <!-- <td> <i class="fa fa-plus-circle fa-2x" aria-hidden="true"></i> </td> -->
         </tr>
         <!-- <tr><td colspan="4"><h2>Supported Wallets</h2></td></tr> -->
         <tr>
@@ -62,8 +62,6 @@
 <script>
 
 import loadBalances from '../functions/loadBalances.js'
-// import loadBalancesFromWallets from '../functions/loadBalancesFromWallets.js'
-// import loadBalancesFromExchanges from '../functions/loadBalancesFromExchanges.js'
 
 function loadExchangeKeys () {
   let exchangeKeys
@@ -76,7 +74,7 @@ function loadExchangeKeys () {
       {'name': 'liqui', 'apiKey': '', 'apiSecret': ''},
       {'name': 'coinbase', 'apiKey': '', 'apiSecret': ''},
       {'name': 'bl3p', 'apiKey': '', 'apiSecret': ''},
-      {'name': 'bitfinex', 'apiKey': '', 'apiSecret': ''},
+      {'name': 'bitfinex2', 'apiKey': '', 'apiSecret': ''},
       {'name': 'poloniex', 'apiKey': '', 'apiSecret': ''}
     ]
   }
@@ -195,4 +193,5 @@ tr {
 .fa:hover {
     color: #42b983;
 }
+
 </style>
