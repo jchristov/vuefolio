@@ -2,7 +2,7 @@
   <div id="manual">
     <table>
       <tbody>
-          ASDASDAS
+          <i class="cc BTC"></i>
         <tr> 
           <i class="fa fa-trash-o fa-2x" aria-hidden="true" v-on:click="deleteManualEntries"></i>
         </tr>
