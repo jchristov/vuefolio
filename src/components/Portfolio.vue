@@ -1,14 +1,15 @@
 <template>
   <div class="hello">
-    <span v-if="(portfolio !== null)">
-      <p>Switch currency:</p>
+    <span v-if="(combinedBalances !== null)">
+      <p>Switch base currency:</p>
       <p>
-        <i class="cc BTC largeicon" @click="(event) => { switchCurrency(event, 'BTC') }"></i>
-        <i class="cc ETH largeicon" @click="(event) => { switchCurrency(event, 'ETH') }"></i>
-        <i class="fa fa-eur largeicon" @click="(event) => { switchCurrency(event, 'EUR') }"></i>
-        <i class="fa fa-usd largeicon" @click="(event) => { switchCurrency(event, 'USD') }"></i>
+        <i class="cc BTC largeicon" @click="(event) => { switchBaseCurrency(event, 'BTC') }"></i>
+        <i class="cc ETH largeicon" @click="(event) => { switchBaseCurrency(event, 'ETH') }"></i>
+        <i class="fa fa-eur largeicon" @click="(event) => { switchBaseCurrency(event, 'EUR') }"></i>
+        <i class="fa fa-usd largeicon" @click="(event) => { switchBaseCurrency(event, 'USD') }"></i>
       </p>
-      <PortfolioTable :portfolio="portfolio" :rates="exchangeRates" :currency="currency"/>
+      <!-- <PortfolioTable :portfolio="combinedBalances" :rates="exchangeRates" :currency="baseCurrency"/> -->
+      <PortfolioTable :portfolio="myPortfolio"/>
       <span id="footer">
         If you enjoy using this web app, please consider donating. 
         <p><i class="cc BTC"></i>3BUo1JcBpbG4JuG1QaPqCoPtDzPtGhh</p> 
@@ -26,11 +27,11 @@ import combineBalances from '../functions/combineBalances.js'
 import requestExchangeRates from '../functions/requestExchangeRates.js'
 import PortfolioTable from './PortfolioTable'
 
-var initialCurrency
-if (localStorage.preferredCurrency) {
-  initialCurrency = localStorage.preferredCurrency
+var initialBaseCurrency
+if (localStorage.baseCurrency) {
+  initialBaseCurrency = localStorage.baseCurrency
 } else {
-  initialCurrency = 'BTC'
+  initialBaseCurrency = 'BTC'
 }
 
 export default {
@@ -40,14 +41,37 @@ export default {
       walletBalances: JSON.parse(localStorage.getItem('walletBalances')),
       exchangeBalances: JSON.parse(localStorage.getItem('exchangeBalances')),
       manualBalances: JSON.parse(localStorage.getItem('manualBalances')),
-      currencies: ['EUR', 'BTC', 'ETH', 'USD'],
-      currency: initialCurrency
+      baseCurrency: initialBaseCurrency
+      // baseCurrencies: ['EUR', 'BTC', 'ETH', 'USD'],
     }
   },
   computed: {
-    portfolio: function () {
-      if (this.walletBalances || this.exchangeBalances) {
+    combinedBalances: function () {
+      if (this.walletBalances || this.exchangeBalances || this.manualBalances) {
         return combineBalances(this.walletBalances, this.exchangeBalances, this.manualBalances)
+      } else {
+        return null
+      }
+    },
+    myPortfolio: function () {
+      if (this.exchangeRates !== null) { // exchangeRates is an async thingy that returns null if its not ready
+        var portfolio = []
+        Object.keys(this.combinedBalances).forEach(
+          (token, index) => {
+            portfolio[index] = {
+              'name': token,
+              'balance': this.combinedBalances[token],
+              'rate': this.exchangeRates[token][this.baseCurrency]['rate'],
+              'holding': this.combinedBalances[token] * this.exchangeRates[token][this.baseCurrency]['rate'],
+              '24hchange': this.exchangeRates[token][this.baseCurrency]['change']
+            }
+          }
+        )
+        // Now sort based on 'holding' value
+        return portfolio.sort(function (a, b) {
+          return parseFloat(b.holding) - parseFloat(a.holding)
+        }
+        )
       } else {
         return null
       }
@@ -56,8 +80,8 @@ export default {
   asyncComputed: {
     exchangeRates: {
       get () {
-        if (this.portfolio !== null) {
-          var rates = requestExchangeRates(Object.keys(this.portfolio))
+        if (this.combinedBalances !== null) {
+          var rates = requestExchangeRates(Object.keys(this.combinedBalances))
           return rates
         }
       },
@@ -76,9 +100,9 @@ export default {
     PortfolioTable
   },
   methods: {
-    switchCurrency (event, cur) {
-      this.currency = cur
-      localStorage.setItem('preferredCurrency', cur)
+    switchBaseCurrency (event, cur) {
+      this.baseCurrency = cur
+      localStorage.setItem('baseCurrency', cur)
     }
   }
 

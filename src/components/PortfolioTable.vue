@@ -10,15 +10,15 @@
           <th class="nr">Value in {{currency}}</th>
           <th class="nr">24h% Change</th>
         </tr>
-        <tr v-if="!(rates === null)" v-for="balance,token,index in portfolio">
-          <td class="str">{{token}}</td>
-          <td class="nr">{{balance | round(3) }}</td>
-          <td class="nr">{{rates[token][currency]['rate'] | round(5)}}</td>
-          <td class="nr">{{balance * rates[token][currency]['rate'] | round(2) }}</td>
+        <tr v-if="!(portfolio === null)" v-for="token in portfolio">
+          <td class="str">{{token['name']}}</td>
+          <td class="nr">{{token['balance'] | round(3) }}</td>
+          <td class="nr">{{token['rate'] | round(5)}}</td>
+          <td class="nr">{{token['holding'] | round(2) }}</td>
 
-          <td v-if="rates[token][currency]['change'] > 0.0" class="nrpos">{{rates[token][currency]['change'] | round(2) }}</td>
-          <td v-else-if="rates[token][currency]['change'] < 0.0" class="nrneg">{{rates[token][currency]['change'] | round(2) }}</td>
-          <td v-else class="nr">{{rates[token][currency]['change'] | round(2) }}</td>
+          <td v-if="token['24hchange'] > 0.0" class="nrpos">{{token['24hchange'] | round(2) }}</td>
+          <td v-else-if="token['24hchange'] < 0.0" class="nrneg">{{token['24hchange'] | round(2) }}</td>
+          <td v-else class="nr">{{token['24hchange'] | round(2) }}</td>
         </tr>
       </tbody>
     </table>
@@ -39,12 +39,10 @@ export default {
     totalValue: function () {
       var total = 0.0
       var portfolio = this.portfolio
-      var rates = this.rates
-      var currency = this.currency
 
-      if (!(rates === null)) {
-        Object.keys(portfolio).forEach(function (token, index) {
-          total += portfolio[token] * rates[token][currency]['rate']
+      if (portfolio !== null) {
+        portfolio.forEach(function (tokenInfo) {
+          total += tokenInfo['holding']
         })
       }
       return total
