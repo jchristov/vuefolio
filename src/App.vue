@@ -16,6 +16,10 @@ export default {
 </script>
 
 <style>
+@import "../webfont/cryptocoins.css";
+@import "../webfont/cryptocoins-colors.css";
+
+
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -29,4 +33,41 @@ a:visited { text-decoration: none; color:black; }
 a:hover { text-decoration: none; color:black; }
 a:focus { text-decoration: none; color:black; }
 a:hover, a:active { text-decoration: none; color:black }
+
+ul {
+  width: 40%;
+  text-align: center;
+}
+
+table{
+  margin: auto;
+  width: 40%;
+  vertical-align: top;
+}
+
+td {
+  vertical-align: top;
+}
+
+tr {
+  vertical-align: top;
+}
+
+.input {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  border-bottom: 1px solid black;
+  /* width: 50px; */
+  color: #42b983;
+}
+
+.fa:hover {
+    color: #42b983;
+}
+
+.cc:hover {
+    color: #42b983;
+}
+
 </style>

@@ -58,41 +58,12 @@ export default {
 </script>
 
 <style scoped>
-#wallets {
+/* #wallets {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
-}
-
-ul{
-  width: 40%;
-  text-align: center;
-}
-
-table{
-  margin: auto;
-  width: 40%;
-  vertical-align: top;
-}
-
-td {
-  vertical-align: top;
-}
-
-tr {
-  vertical-align: top;
-}
-
-.input {
-  border: 0;
-  outline: 0;
-  background: transparent;
-  border-bottom: 1px solid black;
-  /* width: 50px; */
-  color: #42b983;
-}
-
+} */
 </style>

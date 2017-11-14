@@ -1,17 +1,18 @@
 <template>
   <div class="hello">
     <span v-if="(portfolio !== null)">
-      <p>Switch currency:
-        <button @click="(event) => { switchCurrency(event, 'BTC') }">Ƀ</button>
-        <button @click="(event) => { switchCurrency(event, 'ETH') }">Ξ</button>
-        <button @click="(event) => { switchCurrency(event, 'EUR') }">€</button>
-        <button @click="(event) => { switchCurrency(event, 'USD') }">$</button>
+      <p>Switch currency:</p>
+      <p>
+        <i class="cc BTC largeicon" @click="(event) => { switchCurrency(event, 'BTC') }"></i>
+        <i class="cc ETH largeicon" @click="(event) => { switchCurrency(event, 'ETH') }"></i>
+        <i class="fa fa-eur largeicon" @click="(event) => { switchCurrency(event, 'EUR') }"></i>
+        <i class="fa fa-usd largeicon" @click="(event) => { switchCurrency(event, 'USD') }"></i>
       </p>
       <PortfolioTable :portfolio="portfolio" :rates="exchangeRates" :currency="currency"/>
       <span id="footer">
         If you enjoy using this web app, please consider donating. 
-        <i class="cc BTC"></i>3BUo1JcBpbG4JuG1QaPqCoPtDzPtGhh 
-        <i class="cc ETH"></i>ETH: 0x4cf2E9f6DBAd97Fd901568D37Bb7EfAE2F4f3
+        <p><i class="cc BTC"></i>3BUo1JcBpbG4JuG1QaPqCoPtDzPtGhh</p> 
+        <p><i class="cc ETH"></i>ETH: 0x4cf2E9f6DBAd97Fd901568D37Bb7EfAE2F4f3</p>
       </span>
     </span>
     <span v-else>
@@ -105,12 +106,16 @@ a {
 }
 
 #footer {
-  position: absolute;
+  position: relative;
   right: 0;
   bottom: 0;
   left: 0;
   padding: 1rem;
   background-color: #efefef;
   text-align: center;
+}
+
+.largeicon {
+  font-size: 2em; 
 }
 </style>

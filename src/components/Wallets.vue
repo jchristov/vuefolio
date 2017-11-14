@@ -53,20 +53,9 @@ export default {
 </script>
 
 <style scoped>
-#wallets {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
 
-table {
-  margin: auto;
-  width: 40%;
-  text-align: left;
-  font-size: 14px;
+.address{
+  color: #42b983;
 }
 
 ul {
@@ -76,28 +65,8 @@ ul {
   padding-right: 0px;
 }
 
-td {
-  vertical-align: top;
-}
-
-tr {
-  vertical-align: top;
-}
-
-.address{
-  color: #42b983;
-}
-
 .header {
     text-decoration: underline;
     border-bottom: 2px;
 }
-
-
-.myjson{
-  margin: auto;
-  width: 40%;
-  text-align: left;
-}
-
 </style>
