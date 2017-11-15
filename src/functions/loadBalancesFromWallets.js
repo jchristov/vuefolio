@@ -9,7 +9,7 @@ export default async function loadBalancesFromWallets (walletKeys) {
     let wallet = walletKeys[index]
 
     if (wallet.name === 'Bitcoin') {
-      walletBalances['btc'] = {}
+      walletBalances['bitcoin'] = {}
 
       await Promise.all(
         wallet.publicKeys.map(
@@ -44,6 +44,15 @@ export default async function loadBalancesFromWallets (walletKeys) {
       )
     }
   }
+
+  // // Remove empty wallets
+  // Object.keys(walletBalances).forEach(wallet => {
+  //   console.log(wallet)
+  //   if (Object.keys(walletBalances[wallet]).length === 0) {
+  //     delete walletBalances[wallet]
+  //   }
+  // }
+  // )
 
   localStorage.setItem('walletBalances', JSON.stringify(walletBalances))
 }

@@ -4,13 +4,15 @@
     <table>
       <tbody>
         <tr>
+          <th class="str"></th>
           <th class="str">Name</th>
           <th class="nr">Balance</th>
           <th class="nr">Price in {{currency}}</th>
           <th class="nr">Value in {{currency}}</th>
           <th class="nr">24h% Change</th>
         </tr>
-        <tr v-if="!(portfolio === null)" v-for="token in portfolio">
+        <tr class="portfolio" v-if="!(portfolio === null)" v-for="token in portfolio">
+          <td ><i :class="getIcon(token['name'])"></i></td>
           <td class="str">{{token['name']}}</td>
           <td class="nr">{{token['balance'] | round(3) }}</td>
           <td class="nr">{{token['rate'] | round(5)}}</td>
@@ -48,6 +50,11 @@ export default {
       return total
     }
   },
+  methods: {
+    getIcon: function (name) {
+      return 'cc ' + name.toUpperCase()
+    }
+  },
   filters: {
     round: function (value, decimals) {
       return value.toFixed(decimals)
@@ -58,12 +65,8 @@ export default {
 
 <style scoped>
 
-.str {
-  text-align: left;
-}
-
-.nr {
-  text-align: right;
+tr.portfolio:hover {
+    background-color: lightgrey;
 }
 
 .nrpos {

@@ -3,18 +3,12 @@
     <span v-if="(combinedBalances !== null)">
       <p>Switch base currency:</p>
       <p>
-        <i class="cc BTC largeicon" @click="(event) => { switchBaseCurrency(event, 'BTC') }"></i>
-        <i class="cc ETH largeicon" @click="(event) => { switchBaseCurrency(event, 'ETH') }"></i>
-        <i class="fa fa-eur largeicon" @click="(event) => { switchBaseCurrency(event, 'EUR') }"></i>
-        <i class="fa fa-usd largeicon" @click="(event) => { switchBaseCurrency(event, 'USD') }"></i>
+        <button @click="(event) => { switchBaseCurrency(event, 'BTC') }">BTC</button>
+        <button @click="(event) => { switchBaseCurrency(event, 'ETH') }">ETH</button>
+        <button @click="(event) => { switchBaseCurrency(event, 'EUR') }">EUR</button>
+        <button @click="(event) => { switchBaseCurrency(event, 'USD') }">USD</button>
       </p>
-      <!-- <PortfolioTable :portfolio="combinedBalances" :rates="exchangeRates" :currency="baseCurrency"/> -->
-      <PortfolioTable :portfolio="myPortfolio"/>
-      <span id="footer">
-        If you enjoy using this web app, please consider donating. 
-        <p><i class="cc BTC"></i>3BUo1JcBpbG4JuG1QaPqCoPtDzPtGhh</p> 
-        <p><i class="cc ETH"></i>ETH: 0x4cf2E9f6DBAd97Fd901568D37Bb7EfAE2F4f3</p>
-      </span>
+      <PortfolioTable :portfolio="myPortfolio" :currency="baseCurrency"/>
     </span>
     <span v-else>
       <p>Hi. Go to Settings</p>
@@ -137,9 +131,5 @@ a {
   padding: 1rem;
   background-color: #efefef;
   text-align: center;
-}
-
-.largeicon {
-  font-size: 2em; 
 }
 </style>

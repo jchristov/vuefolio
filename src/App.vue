@@ -43,13 +43,19 @@ table{
   margin: auto;
   width: 40%;
   vertical-align: top;
+  /* border: 1px solid #CCC; */
+  border-collapse: collapse;
 }
 
-td {
-  vertical-align: top;
+th.str, td.str {
+  text-align: left;
 }
 
-tr {
+th.nr, td.nr {
+  text-align: right;
+}
+
+td, tr {
   vertical-align: top;
 }
 
@@ -66,8 +72,12 @@ tr {
     color: #42b983;
 }
 
-.cc:hover {
-    color: #42b983;
+a, a:hover {
+  color: #42b983;
+}
+
+.largeicon {
+  font-size: 1.5em; 
 }
 
 </style>

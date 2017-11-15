@@ -56,6 +56,9 @@
       <p>For Ethereum: all ERC20 token balances are loaded as well</p>
       <p>Ark not implemented yet</p>
     </p>
+    <h3>If you enjoy using this web app, please consider donating. </h3>
+      <p><i class="cc BTC"></i>&nbsp 3BUo1JcBpbG4JuG1QaPqCoPtDzPtGhh</p> 
+      <p><i class="cc ETH"></i>&nbsp 0x4cf2E9f6DBAd97Fd901568D37Bb7EfAE2F4f3</p>
   </div>
 </template>
 
@@ -134,10 +137,7 @@ export default {
     },
     sync () {
       this.startRotating()
-      // var stopRotating = this.stopRotating
       loadBalances(this.walletKeys, this.exchangeKeys).then(r => this.stopRotating())
-      // loadBalancesFromWallets(this.walletKeys).then(r => stopRotating())
-      // loadBalancesFromExchanges(this.exchangeKeys).then(r => stopRotating())
     },
     capitalizeFirstLetter (string) {
       return string.charAt(0).toUpperCase() + string.slice(1)

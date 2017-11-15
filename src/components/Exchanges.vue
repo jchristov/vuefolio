@@ -43,23 +43,6 @@ export default {
 </script>
 
 <style scoped>
-#exchanges {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-
-td {
-  vertical-align: top;
-}
-
-tr {
-  vertical-align: top;
-}
-
 .header {
     text-decoration: underline;
     border-bottom: 2px;
