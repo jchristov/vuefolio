@@ -36,7 +36,6 @@ export default {
       exchangeBalances: JSON.parse(localStorage.getItem('exchangeBalances')),
       manualBalances: JSON.parse(localStorage.getItem('manualBalances')),
       baseCurrency: initialBaseCurrency
-      // baseCurrencies: ['EUR', 'BTC', 'ETH', 'USD'],
     }
   },
   computed: {

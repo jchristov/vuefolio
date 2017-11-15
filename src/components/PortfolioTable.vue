@@ -1,7 +1,7 @@
 <template>
   <div id="portfoliotable">
     <h1> Total Value of Portfolio: {{totalValue | round(2)}} {{currency}} </h1>
-    <table>
+    <table v-if="!(portfolio === null)">
       <tbody>
         <tr>
           <th class="str"></th>
@@ -11,7 +11,7 @@
           <th class="nr">Value in {{currency}}</th>
           <th class="nr">24h% Change</th>
         </tr>
-        <tr class="portfolio" v-if="!(portfolio === null)" v-for="token in portfolio">
+        <tr class="portfolio" v-for="token in portfolio" v-if="token['holding'] > 0.001">
           <td ><i :class="getIcon(token['name'])"></i></td>
           <td class="str">{{token['name']}}</td>
           <td class="nr">{{token['balance'] | round(3) }}</td>

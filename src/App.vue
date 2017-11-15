@@ -19,7 +19,6 @@ export default {
 @import "../webfont/cryptocoins.css";
 @import "../webfont/cryptocoins-colors.css";
 
-
 #app {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;

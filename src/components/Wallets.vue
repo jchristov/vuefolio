@@ -3,8 +3,7 @@
     <p>Overview of cryptocurrencies held in different wallets</p>
     <table>
       <tbody>
-        <!-- <th class="header" v-for="(wallet, name) in walletBalances">{{name | capitalizeFirstLetter}}</th> -->
-        <th> <i class="cc BTC largeicon"/> Bitcoin </th>
+        <th> <i class="cc BTC largeicon"/> Bitcoin</th>
         <th> <i class="cc ETH largeicon"/> Ethereum </th>
         <th> <i class="cc NEO largeicon"/> Neo </th>
         <th> <i class="cc IOTA-alt largeicon"/> Iota </th>
@@ -20,7 +19,7 @@
                   </a>
                 </td>
               <tr>
-              <tr v-for="(balance, token) in balances">
+              <tr class="balances" v-for="(balance, token) in balances">
                 <td class="str">{{token}} </td>
                 <td class="nr">{{balance | round(3)}}</td>
               </tr>
@@ -31,7 +30,7 @@
     </table>
   </div>
 </template>
-asd
+
 <script>
 export default {
   data () {
@@ -92,11 +91,9 @@ padding-top: 0px;
 padding-bottom: 0px;
 }
 
-/* th.str, td.str {
-  text-align: left;
+tr.balances:hover {
+    background-color: lightgrey;
 }
 
-th.nr, td.nr {
-  text-align: right;
-} */
+
 </style>

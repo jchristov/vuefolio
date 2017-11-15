@@ -49,20 +49,15 @@ export default {
       }
     },
     deleteManualEntries () {
-      localStorage.removeItem('manualBalances')
-      this.manualBalances = loadManualEntries()
+      // localStorage.removeItem('manualBalances')
+      // this.manualBalances = loadManualEntries()
+      this.manualBalances = [{'description': '', 'token': '', 'balance': ''}]
+      localStorage.setItem('manualBalances', JSON.stringify(this.manualBalances))
     }
   }
 }
 </script>
 
 <style scoped>
-/* #wallets {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-} */
+
 </style>

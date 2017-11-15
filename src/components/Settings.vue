@@ -10,7 +10,7 @@
         <!-- <tr><td colspan="4"><h2>Supported Exchanges</h2></td></tr> -->
         <tr>
           <th v-for="item in exchangeKeys.slice(0,4)">
-              <p>{{capitalizeFirstLetter(item.name)}}</p>
+              <p>{{item.name | capitalizeFirstLetter}}</p>
           </th>
         </tr>
         <tr>
@@ -21,7 +21,7 @@
         </tr>
         <tr>
           <th v-for="item in exchangeKeys.slice(4,8)">
-              <p>{{capitalizeFirstLetter(item.name)}}</p>
+              <p>{{item.name | capitalizeFirstLetter}}</p>
           </th>
         </tr>
         <tr>
@@ -34,7 +34,7 @@
         <!-- <tr><td colspan="4"><h2>Supported Wallets</h2></td></tr> -->
         <tr>
           <th vertical-align="top" v-for="wallet in walletKeys">
-              <p>{{capitalizeFirstLetter(wallet.name)}}</p>
+              <p>{{wallet.name | capitalizeFirstLetter}}</p>
           </th>
         </tr>
         <tr> 
@@ -65,40 +65,8 @@
 <script>
 
 import loadBalances from '../functions/loadBalances.js'
-
-function loadExchangeKeys () {
-  let exchangeKeys
-
-  if (localStorage.exchangeKeys) {
-    exchangeKeys = JSON.parse(localStorage.exchangeKeys)
-  } else {
-    exchangeKeys = [
-      {'name': 'bittrex', 'apiKey': '', 'apiSecret': ''},
-      {'name': 'liqui', 'apiKey': '', 'apiSecret': ''},
-      {'name': 'coinbase', 'apiKey': '', 'apiSecret': ''},
-      {'name': 'bl3p', 'apiKey': '', 'apiSecret': ''},
-      {'name': 'bitfinex2', 'apiKey': '', 'apiSecret': ''},
-      {'name': 'poloniex', 'apiKey': '', 'apiSecret': ''}
-    ]
-  }
-  return exchangeKeys
-}
-
-function loadWalletKeys () {
-  let walletKeys
-
-  if (localStorage.walletKeys) {
-    walletKeys = JSON.parse(localStorage.walletKeys)
-  } else {
-    walletKeys = [
-      {'name': 'Bitcoin', 'publicKeys': []},
-      {'name': 'Ethereum', 'publicKeys': []},
-      {'name': 'Neo', 'publicKeys': []},
-      {'name': 'Ark', 'publicKeys': []}
-    ]
-  }
-  return walletKeys
-}
+import loadExchangeKeys from '../functions/loadExchangeKeys.js'
+import loadWalletKeys from '../functions/loadWalletKeys.js'
 
 export default {
   name: 'settings',
@@ -139,14 +107,16 @@ export default {
       this.startRotating()
       loadBalances(this.walletKeys, this.exchangeKeys).then(r => this.stopRotating())
     },
-    capitalizeFirstLetter (string) {
-      return string.charAt(0).toUpperCase() + string.slice(1)
-    },
     startRotating () {
       this.myIcon = 'fa fa-spin fa-refresh fa-2x'
     },
     stopRotating () {
       this.myIcon = 'fa fa-refresh fa-2x'
+    }
+  },
+  filters: {
+    capitalizeFirstLetter: function (string) {
+      return string.charAt(0).toUpperCase() + string.slice(1)
     }
   }
 }
