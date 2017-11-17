@@ -40,7 +40,7 @@ ul {
 
 table{
   margin: auto;
-  width: 40%;
+  width: 60%;
   vertical-align: top;
   /* border: 1px solid #CCC; */
   border-collapse: collapse;
@@ -77,6 +77,12 @@ a, a:hover {
 
 .largeicon {
   font-size: 1.5em; 
+}
+
+tr.blank_row
+{
+    height: 10px !important; /* overwrites any other rules */
+    background-color: #FFFFFF;
 }
 
 </style>

@@ -2,13 +2,18 @@
   <div id="manual">
     <table>
       <tbody>
-        <tr> 
+        <tr class="blank_row"/>
+        <tr class="blank_row"/>
+        <tr>
+          <td colspan="3"> 
           <i class="fa fa-trash-o fa-2x" aria-hidden="true" v-on:click="deleteManualEntries"></i>
+          </td>
         </tr>
+        <tr class="blank_row">
         <tr v-for="item in manualBalances">
-          <input class="input" type="text" placeholder="Description" v-model="item.description" v-on:change="changeManualEntry(item)">
-          <input class="input" type="text" placeholder="Token" v-model="item.token" v-on:change="changeManualEntry(item)">
-          <input class="input" type="text" placeholder="Balance" v-model="item.balance" v-on:change="changeManualEntry(item)">
+          <td><input class="input" type="text" placeholder="Description" v-model="item.description" v-on:change="changeManualEntry(item)"></td>
+          <td><input class="input" type="text" placeholder="Token" v-model="item.token" v-on:change="changeManualEntry(item)"></td>
+          <td><input class="input" type="text" placeholder="Balance" v-model="item.balance" v-on:change="changeManualEntry(item)"></td>
         </tr>
       </tbody>
     </table>
@@ -59,5 +64,19 @@ export default {
 </script>
 
 <style scoped>
+input.input {
+  width: 100%;
+}
 
+td {
+  padding-left: 0px;
+  padding-right: 15px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+
+table{
+  /* margin: auto; */
+  width: 40%;
+}
 </style>

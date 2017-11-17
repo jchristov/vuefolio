@@ -1,7 +1,7 @@
 <template>
   <div id="settings">
     <p>
-      <i :class="myIcon" aria-hidden="true" v-on:click="sync"></i>
+      <i :class="mySyncIcon" aria-hidden="true" v-on:click="sync"></i>
       <span>&nbsp&nbsp&nbsp</span>
       <i class="fa fa-trash-o fa-2x" aria-hidden="true" v-on:click="clearKeys"></i>
     </p>
@@ -34,7 +34,8 @@
         <!-- <tr><td colspan="4"><h2>Supported Wallets</h2></td></tr> -->
         <tr>
           <th vertical-align="top" v-for="wallet in walletKeys">
-              <p>{{wallet.name | capitalizeFirstLetter}}</p>
+              <p><i :class="getIcon(wallet.name)"></i>
+              {{wallet.name | capitalizeFirstLetter}}</p>
           </th>
         </tr>
         <tr> 
@@ -42,14 +43,13 @@
               <span v-for="(key,index) in wallet.publicKeys">
                 <input class="input" v-model="wallet.publicKeys[index]" v-on:change="changeWalletKey(wallet,index,$event)">
               </span>
-
               <input class="input" value= '' placeholder="Enter Public Key" v-on:change="addWalletKey(wallet, $event)">
           </td>
         </tr>
       </tbody>
     </table>
 
-    <h3>Instructions</h3>
+    <!-- <h3>Instructions</h3>
       <p>Enter API keys for exchanges and public keys for cryptocurrencies held in your own wallets and press the sync button</p>
       <p>Then go back to "Portfolio"</p>
       <p>For Bitcoin: export xpub key using your wallet software. Does not work with Segwit (yet?)</p>
@@ -58,7 +58,7 @@
     </p>
     <h3>If you enjoy using this web app, please consider donating. </h3>
       <p><i class="cc BTC"></i>&nbsp 3BUo1JcBpbG4JuG1QaPqCoPtDzPtGhh</p> 
-      <p><i class="cc ETH"></i>&nbsp 0x4cf2E9f6DBAd97Fd901568D37Bb7EfAE2F4f3</p>
+      <p><i class="cc ETH"></i>&nbsp 0x4cf2E9f6DBAd97Fd901568D37Bb7EfAE2F4f3</p> -->
   </div>
 </template>
 
@@ -67,12 +67,13 @@
 import loadBalances from '../functions/loadBalances.js'
 import loadExchangeKeys from '../functions/loadExchangeKeys.js'
 import loadWalletKeys from '../functions/loadWalletKeys.js'
+import getIcon from '../functions/getIcon.js'
 
 export default {
   name: 'settings',
   data () {
     return {
-      myIcon: 'fa fa-refresh fa-2x',
+      mySyncIcon: 'fa fa-refresh fa-2x',
       exchangeKeys: loadExchangeKeys(),
       walletKeys: loadWalletKeys()
     }
@@ -108,10 +109,13 @@ export default {
       loadBalances(this.walletKeys, this.exchangeKeys).then(r => this.stopRotating())
     },
     startRotating () {
-      this.myIcon = 'fa fa-spin fa-refresh fa-2x'
+      this.mySyncIcon = 'fa fa-spin fa-refresh fa-2x'
     },
     stopRotating () {
-      this.myIcon = 'fa fa-refresh fa-2x'
+      this.mySyncIcon = 'fa fa-refresh fa-2x'
+    },
+    getIcon (token) {
+      return getIcon(token)
     }
   },
   filters: {
@@ -123,4 +127,15 @@ export default {
 </script>
 
 <style scoped>
+
+input.input {
+  width: 100%;
+}
+
+td {
+  padding-left: 0px;
+  padding-right: 15px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
 </style>

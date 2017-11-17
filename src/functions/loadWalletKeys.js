@@ -8,7 +8,7 @@ export default function loadWalletKeys () {
       {'name': 'Bitcoin', 'publicKeys': []},
       {'name': 'Ethereum', 'publicKeys': []},
       {'name': 'Neo', 'publicKeys': []},
-      {'name': 'Ark', 'publicKeys': []}
+      {'name': 'IOTA', 'publicKeys': []}
     ]
   }
   return walletKeys

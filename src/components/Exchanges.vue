@@ -1,11 +1,11 @@
 <template>
   <div id="exchanges">
     <p>Overview of cryptocurrencies held on different exchanges</p>
-  <table>
+  <table v-if="(exchangeBalances !== null)">
     <tbody>
 
       <tr>
-        <th v-for="item in exchangeKeys.slice(0,4)">
+        <th class="header" v-for="item in exchangeKeys.slice(0,4)">
           {{item.name | capitalizeFirstLetter}}
         </th>
       </tr>
@@ -13,6 +13,7 @@
       <tr>
         <td v-for="item in exchangeKeys.slice(0,4)" v-if="exchangeBalances[item.name]">
           <table class="subtable">
+            <tr class="blank_row"></tr> 
             <tr class="balances" v-for="(balance,token) in exchangeBalances[item.name]">
                 <td class="str">{{token}}</td>
                 <td class="nr">{{balance | round(3)}}</td>
@@ -22,7 +23,7 @@
       </tr>
 
       <tr>
-        <th v-for="item in exchangeKeys.slice(4,8)">
+        <th class="header" v-for="item in exchangeKeys.slice(4,8)">
           <p>{{item.name | capitalizeFirstLetter}}</p>
         </th>
       </tr>
@@ -30,6 +31,7 @@
       <tr>
         <td v-for="item in exchangeKeys.slice(4,8)" v-if="exchangeBalances[item.name]">
           <table class="subtable">
+            <tr class="blank_row"></tr> 
             <tr class="balances" v-for="(balance,token) in exchangeBalances[item.name]">
                 <td class="str">{{token}}</td>
                 <td class="nr">{{balance | round(3)}}</td>
@@ -67,8 +69,10 @@ export default {
 
 <style scoped>
 .header {
-    text-decoration: underline;
-    border-bottom: 2px;
+    /* text-decoration: underline; */
+    /* border-bottom: 2px; */
+    text-align: center;
+    
 }
 
 table{

@@ -8,10 +8,10 @@
           <th class="str">Name</th>
           <th class="nr">Balance</th>
           <th class="nr">Price in {{currency}}</th>
-          <th class="nr">Value in {{currency}}</th>
+          <th class="nr">Holding in {{currency}}</th>
           <th class="nr">24h% Change</th>
         </tr>
-        <tr class="portfolio" v-for="token in portfolio" v-if="token['holding'] > 0.001">
+        <tr class="portfolio" v-for="token in portfolio" v-if="token['holding'] > -1.00">
           <td ><i :class="getIcon(token['name'])"></i></td>
           <td class="str">{{token['name']}}</td>
           <td class="nr">{{token['balance'] | round(3) }}</td>
@@ -77,5 +77,13 @@ tr.portfolio:hover {
 .nrneg {
   text-align: right;
   color: red; 
+}
+
+table{
+  margin: auto;
+  width: 50%;
+  text-align: left;
+  font-size: 16px;
+  padding: 0px
 }
 </style>

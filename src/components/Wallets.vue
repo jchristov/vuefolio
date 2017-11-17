@@ -3,14 +3,14 @@
     <p>Overview of cryptocurrencies held in different wallets</p>
     <table>
       <tbody>
-        <th> <i class="cc BTC largeicon"/> Bitcoin</th>
-        <th> <i class="cc ETH largeicon"/> Ethereum </th>
-        <th> <i class="cc NEO largeicon"/> Neo </th>
-        <th> <i class="cc IOTA-alt largeicon"/> Iota </th>
+        <th class="wallet"> <i class="cc BTC largeicon"/> Bitcoin</th>
+        <th class="wallet"> <i class="cc ETH largeicon"/> Ethereum </th>
+        <th class="wallet"> <i class="cc NEO largeicon"/> Neo </th>
+        <th class="wallet"> <i class="cc IOTA-alt largeicon"/> Iota </th>
         <tr>
           <td v-for="(blockchain, name) in walletBalances">
             <table class="subtable" v-for="(balances, address) in blockchain">
-              <tr> 
+              <tr class="blank_row"></tr> 
                 <td colspan="2" :title="address" class="str address">
                   <a href="http://etherscan.io/address/ + address">
                     <div style="height:100%;width:100%">
@@ -93,6 +93,10 @@ padding-bottom: 0px;
 
 tr.balances:hover {
     background-color: lightgrey;
+}
+
+th.wallet {
+  text-align: center;
 }
 
 

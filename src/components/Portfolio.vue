@@ -1,6 +1,8 @@
 <template>
   <div class="hello">
     <span v-if="(combinedBalances !== null)">
+      <!-- <p><i :class="mySyncIcon" aria-hidden="true" v-on:click="sync"></i></p> -->
+      <PortfolioTable :portfolio="myPortfolio" :currency="baseCurrency"/>
       <p>Switch base currency:</p>
       <p>
         <button @click="(event) => { switchBaseCurrency(event, 'BTC') }">BTC</button>
@@ -8,7 +10,6 @@
         <button @click="(event) => { switchBaseCurrency(event, 'EUR') }">EUR</button>
         <button @click="(event) => { switchBaseCurrency(event, 'USD') }">USD</button>
       </p>
-      <PortfolioTable :portfolio="myPortfolio" :currency="baseCurrency"/>
     </span>
     <span v-else>
       <p>Hi. Go to Settings</p>
@@ -20,6 +21,9 @@
 import combineBalances from '../functions/combineBalances.js'
 import requestExchangeRates from '../functions/requestExchangeRates.js'
 import PortfolioTable from './PortfolioTable'
+import loadBalances from '../functions/loadBalances.js'
+import loadExchangeKeys from '../functions/loadExchangeKeys.js'
+import loadWalletKeys from '../functions/loadWalletKeys.js'
 
 var initialBaseCurrency
 if (localStorage.baseCurrency) {
@@ -35,7 +39,10 @@ export default {
       walletBalances: JSON.parse(localStorage.getItem('walletBalances')),
       exchangeBalances: JSON.parse(localStorage.getItem('exchangeBalances')),
       manualBalances: JSON.parse(localStorage.getItem('manualBalances')),
-      baseCurrency: initialBaseCurrency
+      exchangeKeys: loadExchangeKeys(),
+      walletKeys: loadWalletKeys(),
+      baseCurrency: initialBaseCurrency,
+      mySyncIcon: 'fa fa-refresh fa-2x'
     }
   },
   computed: {
@@ -74,6 +81,7 @@ export default {
     exchangeRates: {
       get () {
         if (this.combinedBalances !== null) {
+          console.log(this.combinedBalances)
           var rates = requestExchangeRates(Object.keys(this.combinedBalances))
           return rates
         }
@@ -96,6 +104,23 @@ export default {
     switchBaseCurrency (event, cur) {
       this.baseCurrency = cur
       localStorage.setItem('baseCurrency', cur)
+    },
+    sync () {
+      this.startRotating()
+      console.log(this.combinedBalances)
+      loadBalances(this.walletKeys, this.exchangeKeys).then(r => {
+        this.stopRotating()
+        this.exchangeBalances = JSON.parse(localStorage.getItem('exchangeBalances'))
+        this.manualBalances = JSON.parse(localStorage.getItem('manualBalances'))
+        console.log(this.combinedBalances)
+      }
+      )
+    },
+    startRotating () {
+      this.mySyncIcon = 'fa fa-spin fa-refresh fa-2x'
+    },
+    stopRotating () {
+      this.mySyncIcon = 'fa fa-refresh fa-2x'
     }
   }
 
