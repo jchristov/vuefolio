@@ -1,5 +1,6 @@
 <template>
   <div id="manual">
+    <h1>{{wtf}}</h1>
     <table>
       <tbody>
         <tr class="blank_row"/>
@@ -36,6 +37,7 @@ export default {
       manualBalances: loadManualEntries()
     }
   },
+  props: ['wtf'],
   name: 'Manual',
   methods: {
     changeManualEntry (item) {

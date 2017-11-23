@@ -12,10 +12,6 @@ import Wallets from './components/Wallets'
 import Exchanges from './components/Exchanges'
 import Settings from './components/Settings'
 import Manual from './components/Manual'
-// import BootstrapVue from 'bootstrap-vue'
-// // Bootstrap shit
-// import 'bootstrap-vue/dist/bootstrap-vue.css'
-// import 'bootstrap/dist/css/bootstrap.css'
 
 // Vue.use(BootstrapVue)
 Vue.use(VueRouter) // We imported the router plugin, now we need to tell Vue to *use* the plugin
@@ -25,7 +21,7 @@ const routes = [
 { path: '/', component: Portfolio },
 { path: '/wallets', component: Wallets },
 { path: '/exchanges', component: Exchanges },
-{ path: '/manual', component: Manual },
+{ path: '/manual', component: Manual, props: true },
 { path: '/settings', component: Settings, props: { test: localStorage.test } }
 ]
 

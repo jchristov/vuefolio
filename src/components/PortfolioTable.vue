@@ -11,7 +11,7 @@
           <th class="nr">Holding in {{currency}}</th>
           <th class="nr">24h% Change</th>
         </tr>
-        <tr class="portfolio" v-for="token in portfolio" v-if="token['holding'] > -1.00">
+        <tr class="portfolio" v-for="token in portfolio" v-if="token['holding'] > 0.001">
           <td ><i :class="getIcon(token['name'])"></i></td>
           <td class="str">{{token['name']}}</td>
           <td class="nr">{{token['balance'] | round(3) }}</td>

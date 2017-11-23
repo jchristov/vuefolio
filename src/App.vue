@@ -3,15 +3,19 @@
   <router-link v-bind:to="'/'">Portfolio</router-link>
   <router-link v-bind:to="'/wallets'">Wallets</router-link>
   <router-link v-bind:to="'/exchanges'">Exchanges</router-link>
-  <router-link v-bind:to="'/manual'">Manual Entry</router-link>
+  <router-link :to="{path: '/manual', params: {wtf: 'hos'} }">Manual Entry</router-link>
   <router-link v-bind:to="'/settings'">Settings</router-link>
   <router-view></router-view>
   </div>
 </template>
 
 <script>
-
 export default {
+  data () {
+    return {
+      msg: 'Hoi'
+    }
+  }
 }
 </script>
 
