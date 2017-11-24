@@ -6,47 +6,47 @@
       <i class="fa fa-trash-o fa-2x" aria-hidden="true" v-on:click="clearKeys"></i>
     </p>
     <table>
-      <tbody>
-        <!-- <tr><td colspan="4"><h2>Supported Exchanges</h2></td></tr> -->
-        <tr>
-          <th v-for="item in exchangeKeys.slice(0,4)">
-              <p>{{item.name | capitalizeFirstLetter}}</p>
-          </th>
-        </tr>
-        <tr>
-          <td v-for="item in exchangeKeys.slice(0,4)">
-            <input class="input" type="text" placeholder="Enter API Key" v-model="item.apiKey" v-on:change="changeExchangeKey">
-            <input class="input" type="text" placeholder="Enter API Secret" v-model="item.apiSecret" v-on:change="changeExchangeKey">
+
+        <!-- Display Exchange Keys -->
+        <tr v-for="i in Math.ceil(exchangeKeys.length / 4)">
+          <td v-for="item in exchangeKeys.slice((i - 1) * 4, i * 4)">
+            <table class="subtable">
+              <th class="myheader">{{item.name | capitalizeFirstLetter}}</th>
+              <tr class="blank_row"></tr>
+              <tr class="blank_row"></tr>
+              <tr>
+                <input class="input" type="text" placeholder="Enter API Key" v-on:input="changeExchangeKey(item.name,'apiKey',$event)">
+              </tr>
+              <tr>
+                <input class="input" type="text" placeholder="Enter API Secret" v-on:input="changeExchangeKey(item.name,'apiSecret',$event)">
+              </tr>
+              <tr class="blank_row"></tr>
+              <tr class="blank_row"></tr>
+            </table>
           </td>
         </tr>
-        <tr>
-          <th v-for="item in exchangeKeys.slice(4,8)">
-              <p>{{item.name | capitalizeFirstLetter}}</p>
-          </th>
-        </tr>
-        <tr>
-          <td v-for="item in exchangeKeys.slice(4,8)">
-            <input class="input" type="text" placeholder="Enter API Key" v-model="item.apiKey" v-on:change="changeExchangeKey">
-            <input class="input" type="text" placeholder="Enter API Secret" v-model="item.apiSecret" v-on:change="changeExchangeKey">
-          </td>
-          <!-- <td> <i class="fa fa-plus-circle fa-2x" aria-hidden="true"></i> </td> -->
-        </tr>
-        <!-- <tr><td colspan="4"><h2>Supported Wallets</h2></td></tr> -->
-        <tr>
-          <th vertical-align="top" v-for="wallet in walletKeys">
-              <p><i :class="getIcon(wallet.name)"></i>
-              {{wallet.name | capitalizeFirstLetter}}</p>
-          </th>
-        </tr>
-        <tr> 
-          <td vertical-align="top" v-for="wallet in walletKeys">
-              <span v-for="(key,index) in wallet.publicKeys">
-                <input class="input" v-model="wallet.publicKeys[index]" v-on:change="changeWalletKey(wallet,index,$event)">
-              </span>
-              <input class="input" value= '' placeholder="Enter Public Key" v-on:change="addWalletKey(wallet, $event)">
+
+        <!-- Display Wallet Keys -->
+        <tr v-for="i in Math.ceil(walletKeys.length / 4)">
+          <td v-for="wallet in walletKeys.slice((i - 1) * 4, i * 4)">
+            <table class="subtable">
+              
+              <th class="myheader">
+                <i :class="getIcon(wallet.name)"></i>
+                {{wallet.name | capitalizeFirstLetter}}
+              </th>
+              <tr class="blank_row"></tr>
+              <tr class="blank_row"></tr>
+              <tr v-for="(key,index) in wallet.publicKeys">
+                <input class="input" v-model="wallet.publicKeys[index]" v-on:input="changeWalletKey(wallet,index,$event)">
+              </tr>
+              <input class="input" value= '' placeholder="Enter Public Key" v-on:change="changeWalletKey(wallet, wallet.publicKeys.length, $event)">
+              <tr class="blank_row"></tr>
+              <tr class="blank_row"></tr>
+            </table>
           </td>
         </tr>
-      </tbody>
+
     </table>
 
     <!-- <h3>Instructions</h3>
@@ -65,44 +65,43 @@
 <script>
 
 import loadBalances from '../functions/loadBalances.js'
-import loadExchangeKeys from '../functions/loadExchangeKeys.js'
-import loadWalletKeys from '../functions/loadWalletKeys.js'
 import getIcon from '../functions/getIcon.js'
+
+import {mapGetters} from 'vuex'
 
 export default {
   name: 'settings',
   data () {
     return {
-      mySyncIcon: 'fa fa-refresh fa-2x',
-      exchangeKeys: loadExchangeKeys(),
-      walletKeys: loadWalletKeys()
+      mySyncIcon: 'fa fa-refresh fa-2x'
     }
   },
+  computed: mapGetters({
+    exchangeKeys: 'getExchangeKeys',
+    walletKeys: 'getWalletKeys'
+  }),
   methods: {
-    changeExchangeKey () {
-      localStorage.setItem('exchangeKeys', JSON.stringify(this.exchangeKeys))
-    },
-    addWalletKey (wallet, event) {
-      wallet.publicKeys.push(event.target.value)
-      localStorage.setItem('walletKeys', JSON.stringify(this.walletKeys))
-      event.target.value = ''
-    },
-    changeWalletKey (wallet, index, event) {
-      wallet.publicKeys[index] = event.target.value
-
-      // Remove input line after emptying
-      if (event.target.value === '') {
-        wallet.publicKeys.splice(index, 1)
+    changeExchangeKey (exchange, keyType, event) {
+      const payload = {
+        'exchange': exchange,
+        'keyType': keyType,
+        'key': event.target.value
       }
-      localStorage.setItem('walletKeys', JSON.stringify(this.walletKeys))
+      this.$store.commit('changeExchangeKey', payload)
+    },
+    changeWalletKey (wallet, keyIndex, event) {
+      const payload = {
+        'wallet': wallet,
+        'keyIndex': keyIndex,
+        'key': event.target.value
+      }
+      if (wallet.publicKeys.length === keyIndex) {
+        event.target.value = ''
+      }
+      this.$store.commit('changeWalletKey', payload)
     },
     clearKeys () {
-      localStorage.removeItem('exchangeKeys')
-      localStorage.removeItem('walletKeys')
-      localStorage.removeItem('exchangeBalances')
-      localStorage.removeItem('walletBalances')
-      this.walletKeys = loadWalletKeys()
-      this.exchangeKeys = loadExchangeKeys()
+      this.$store.commit('clearKeys')
     },
     sync () {
       this.startRotating()
@@ -137,5 +136,25 @@ td {
   padding-right: 15px;
   padding-top: 0px;
   padding-bottom: 0px;
+}
+
+table{
+  margin: auto;
+  width: 60%;
+  text-align: left;
+  font-size: 14px;
+  table-layout: fixed;
+  padding: 50px
+}
+
+th.myheader{
+  text-align: center;
+}
+
+table.subtable{
+  margin: auto;
+  width: 100%;
+  /* text-align: left; */
+  font-size: 14px;
 }
 </style>
