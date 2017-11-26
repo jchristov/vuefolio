@@ -1,51 +1,50 @@
 <template>
   <div id="settings">
+    <p>Enter read-only API keys and public keys to load token balances from exchanges and wallets</p> 
     <p>
-      <i :class="mySyncIcon" aria-hidden="true" v-on:click="sync"></i>
-      <span>&nbsp&nbsp&nbsp</span>
       <i class="fa fa-trash-o fa-2x" aria-hidden="true" v-on:click="clearKeys"></i>
     </p>
     <table>
 
-        <!-- Display Exchange Keys -->
-        <tr v-for="i in Math.ceil(exchangeKeys.length / 4)">
-          <td v-for="item in exchangeKeys.slice((i - 1) * 4, i * 4)">
-            <table class="subtable">
-              <th class="myheader">{{item.name | capitalizeFirstLetter}}</th>
-              <tr class="blank_row"></tr>
-              <tr class="blank_row"></tr>
-              <tr>
-                <input class="input" type="text" placeholder="Enter API Key" v-on:input="changeExchangeKey(item.name,'apiKey',$event)">
-              </tr>
-              <tr>
-                <input class="input" type="text" placeholder="Enter API Secret" v-on:input="changeExchangeKey(item.name,'apiSecret',$event)">
-              </tr>
-              <tr class="blank_row"></tr>
-              <tr class="blank_row"></tr>
-            </table>
-          </td>
-        </tr>
+    <!-- Display Exchange Keys -->
+    <tr v-for="i in Math.ceil(exchangeKeys.length / 4)">
+      <td v-for="item in exchangeKeys.slice((i - 1) * 4, i * 4)">
+        <table class="subtable">
+          <th class="myheader">{{item.name | capitalizeFirstLetter}}</th>
+          <tr class="blank_row"></tr>
+          <tr class="blank_row"></tr>
+          <tr>
+            <input class="input" type="text" placeholder="Enter API Key" v-model="item.apiKey" v-on:input="changeExchangeKey(item.name,'apiKey',$event)">
+          </tr>
+          <tr>
+            <input class="input" type="text" placeholder="Enter API Secret" v-model="item.apiSecret" v-on:input="changeExchangeKey(item.name,'apiSecret',$event)">
+          </tr>
+          <tr class="blank_row"></tr>
+          <tr class="blank_row"></tr>
+        </table>
+      </td>
+    </tr>
 
-        <!-- Display Wallet Keys -->
-        <tr v-for="i in Math.ceil(walletKeys.length / 4)">
-          <td v-for="wallet in walletKeys.slice((i - 1) * 4, i * 4)">
-            <table class="subtable">
-              
-              <th class="myheader">
-                <i :class="getIcon(wallet.name)"></i>
-                {{wallet.name | capitalizeFirstLetter}}
-              </th>
-              <tr class="blank_row"></tr>
-              <tr class="blank_row"></tr>
-              <tr v-for="(key,index) in wallet.publicKeys">
-                <input class="input" v-model="wallet.publicKeys[index]" v-on:input="changeWalletKey(wallet,index,$event)">
-              </tr>
-              <input class="input" value= '' placeholder="Enter Public Key" v-on:change="changeWalletKey(wallet, wallet.publicKeys.length, $event)">
-              <tr class="blank_row"></tr>
-              <tr class="blank_row"></tr>
-            </table>
-          </td>
-        </tr>
+    <!-- Display Wallet Keys -->
+    <tr v-for="i in Math.ceil(walletKeys.length / 4)">
+      <td v-for="wallet in walletKeys.slice((i - 1) * 4, i * 4)">
+        <table class="subtable">
+          
+          <th class="myheader">
+            <i :class="getIcon(wallet.name)"></i>
+            {{wallet.name | capitalizeFirstLetter}}
+          </th>
+          <tr class="blank_row"></tr>
+          <tr class="blank_row"></tr>
+          <tr v-for="(key,index) in wallet.publicKeys">
+            <input class="input" v-model="wallet.publicKeys[index]" v-on:input="changeWalletKey(wallet,index,$event)">
+          </tr>
+          <input class="input" value= '' placeholder="Enter Public Key" v-on:change="changeWalletKey(wallet, wallet.publicKeys.length, $event)">
+          <tr class="blank_row"></tr>
+          <tr class="blank_row"></tr>
+        </table>
+      </td>
+    </tr>
 
     </table>
 
@@ -64,9 +63,8 @@
 
 <script>
 
-import loadBalances from '../functions/loadBalances.js'
+// import loadBalances from '../functions/loadBalances.js'
 import getIcon from '../functions/getIcon.js'
-
 import {mapGetters} from 'vuex'
 
 export default {
@@ -102,16 +100,6 @@ export default {
     },
     clearKeys () {
       this.$store.commit('clearKeys')
-    },
-    sync () {
-      this.startRotating()
-      loadBalances(this.walletKeys, this.exchangeKeys).then(r => this.stopRotating())
-    },
-    startRotating () {
-      this.mySyncIcon = 'fa fa-spin fa-refresh fa-2x'
-    },
-    stopRotating () {
-      this.mySyncIcon = 'fa fa-refresh fa-2x'
     },
     getIcon (token) {
       return getIcon(token)
@@ -149,6 +137,7 @@ table{
 
 th.myheader{
   text-align: center;
+  vertical-align: middle;
 }
 
 table.subtable{

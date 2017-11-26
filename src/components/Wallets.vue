@@ -1,15 +1,19 @@
 <template>
   <div id="wallets">
     <p>Overview of cryptocurrencies held in different wallets</p>
-    <table>
-      <tbody>
-        <th class="wallet"> <i class="cc BTC largeicon"/> Bitcoin</th>
-        <th class="wallet"> <i class="cc ETH largeicon"/> Ethereum </th>
-        <th class="wallet"> <i class="cc NEO largeicon"/> Neo </th>
-        <th class="wallet"> <i class="cc IOTA-alt largeicon"/> Iota </th>
-        <tr>
-          <td v-for="(blockchain, name) in walletBalances">
-            <table class="subtable" v-for="(balances, address) in blockchain">
+
+    <table v-if="walletBalances">
+
+    <!-- Display Exchange Balances -->
+    <tr v-for="i in Math.ceil(Object.keys(walletBalances).length / 4)">
+      <td v-for="walletName in Object.keys(walletBalances).slice((i - 1) * 4, i * 4)">
+        <table class="subtable">
+          <th class="header">
+            <i :class="getIcon(walletName)"></i>
+            {{walletName | capitalizeFirstLetter}}
+          </th>
+          <tr>
+            <table class="subtable" v-for="(balances, address) in walletBalances[walletName]">
               <tr class="blank_row"></tr> 
                 <td colspan="2" :title="address" class="str address">
                   <a href="http://etherscan.io/address/ + address">
@@ -24,25 +28,32 @@
                 <td class="nr">{{balance | round(3)}}</td>
               </tr>
             </table>
-          </td>
-        </tr>
-      </tbody>
+          </tr>
+          <tr class="blank_row"></tr>
+          <tr class="blank_row"></tr>
+        </table>
+      </td>
+    </tr>
+
     </table>
   </div>
 </template>
 
 <script>
+import {mapGetters} from 'vuex'
+import getIcon from '../functions/getIcon.js'
+
 export default {
-  data () {
-    return {
-      walletBalances: JSON.parse(localStorage.getItem('walletBalances'))
+  name: 'Wallets',
+  computed: mapGetters({
+    walletBalances: 'getWalletBalances'
+  }),
+  methods: {
+    getIcon (token) {
+      return getIcon(token)
     }
   },
-  name: 'Wallets',
   filters: {
-    pretty: function (value) {
-      return JSON.stringify(value, null, 2)
-    },
     capitalizeFirstLetter: function (string) {
       return string.charAt(0).toUpperCase() + string.slice(1)
     },
@@ -70,7 +81,7 @@ export default {
 
 table{
   margin: auto;
-  width: 60%;
+  width: 40%;
   text-align: left;
   font-size: 14px;
   table-layout: fixed;

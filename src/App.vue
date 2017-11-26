@@ -1,19 +1,33 @@
 <template>
   <div id="app">
-  <router-link v-bind:to="'/'">Portfolio</router-link>
-  <router-link v-bind:to="'/wallets'">Wallets</router-link>
-  <router-link v-bind:to="'/exchanges'">Exchanges</router-link>
-  <router-link v-bind:to="'/manual'">Manual Entry</router-link>
-  <router-link v-bind:to="'/settings'">Settings</router-link>
-  <router-view></router-view>
+  <p>
+    <i :class="mySyncIcon" aria-hidden="true" v-on:click="sync"></i>
+  </p>
+  <p>
+    <router-link v-bind:to="'/'">Portfolio</router-link>
+    <router-link v-bind:to="'/wallets'">Wallets</router-link>
+    <router-link v-bind:to="'/exchanges'">Exchanges</router-link>
+    <router-link v-bind:to="'/manual'">Manual Entry</router-link>
+    <router-link v-bind:to="'/settings'">Settings</router-link>
+    <router-view></router-view>
+  </p>
   </div>
 </template>
 
 <script>
+
 export default {
   data () {
     return {
-      msg: 'Hoi'
+      mySyncIcon: 'fa fa-refresh fa-2x'
+    }
+  },
+  methods: {
+    sync () {
+      this.mySyncIcon = 'fa fa-spin fa-refresh fa-2x'
+      this.$store.dispatch('syncExchangeAndWalletBalances').then(r => {
+        this.mySyncIcon = 'fa fa-refresh fa-2x'
+      })
     }
   }
 }

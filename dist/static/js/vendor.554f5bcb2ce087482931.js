@@ -229,6 +229,7 @@ module.exports = class _1btcxe extends Exchange {
             if (Object.keys (params).length)
                 url += '?' + this.urlencode (params);
         } else {
+            this.checkRequiredCredentials ();
             let query = this.extend ({
                 'api_key': this.apiKey,
                 'nonce': this.nonce (),
@@ -503,6 +504,7 @@ module.exports = class foxbit extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             let request = this.extend ({ 'MsgType': path }, query);
             body = this.json (request);
@@ -3989,9 +3991,9 @@ module.exports = class btcturk extends Exchange {
                 },
             },
             'markets': {
-                'BTC/TRY': { 'id': 'BTCTRY', 'symbol': 'BTC/TRY', 'base': 'BTC', 'quote': 'TRY' },
-                'ETH/TRY': { 'id': 'ETHTRY', 'symbol': 'ETH/TRY', 'base': 'ETH', 'quote': 'TRY' },
-                'ETH/BTC': { 'id': 'ETHBTC', 'symbol': 'ETH/BTC', 'base': 'ETH', 'quote': 'BTC' },
+                'BTC/TRY': { 'id': 'BTCTRY', 'symbol': 'BTC/TRY', 'base': 'BTC', 'quote': 'TRY', 'maker': 0.002, 'taker': 0.0035 },
+                'ETH/TRY': { 'id': 'ETHTRY', 'symbol': 'ETH/TRY', 'base': 'ETH', 'quote': 'TRY', 'maker': 0.002, 'taker': 0.0035 },
+                'ETH/BTC': { 'id': 'ETHBTC', 'symbol': 'ETH/BTC', 'base': 'ETH', 'quote': 'BTC', 'maker': 0.002, 'taker': 0.0035 },
             },
         });
     }
@@ -4046,8 +4048,8 @@ module.exports = class btcturk extends Exchange {
             'change': undefined,
             'percentage': undefined,
             'average': parseFloat (ticker['average']),
-            'baseVolume': undefined,
-            'quoteVolume': parseFloat (ticker['volume']),
+            'baseVolume': parseFloat (ticker['volume']),
+            'quoteVolume': undefined,
             'info': ticker,
         };
     }
@@ -4158,6 +4160,7 @@ module.exports = class btcturk extends Exchange {
             if (Object.keys (params).length)
                 url += '?' + this.urlencode (params);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString;
             body = this.urlencode (params);
             let secret = this.base64ToString (this.secret);
@@ -4346,6 +4349,7 @@ module.exports = class coingi extends Exchange {
                     ],
                 },
             },
+            // todo add fetchMarkets
             'markets': {
                 'LTC/BTC': { 'id': 'ltc-btc', 'symbol': 'LTC/BTC', 'base': 'LTC', 'quote': 'BTC' },
                 'PPC/BTC': { 'id': 'ppc-btc', 'symbol': 'PPC/BTC', 'base': 'PPC', 'quote': 'BTC' },
@@ -4355,10 +4359,17 @@ module.exports = class coingi extends Exchange {
                 'NMC/BTC': { 'id': 'nmc-btc', 'symbol': 'NMC/BTC', 'base': 'NMC', 'quote': 'BTC' },
                 'DASH/BTC': { 'id': 'dash-btc', 'symbol': 'DASH/BTC', 'base': 'DASH', 'quote': 'BTC' },
             },
+            'fees': {
+                'trading': {
+                    'taker': 0.2 / 100,
+                    'maker': 0.2 / 100,
+                },
+            },
         });
     }
 
     async fetchBalance (params = {}) {
+        await this.loadMarkets ();
         let currencies = [];
         for (let c = 0; c < this.currencies.length; c++) {
             let currency = this.currencies[c].toLowerCase ();
@@ -4384,6 +4395,7 @@ module.exports = class coingi extends Exchange {
     }
 
     async fetchOrderBook (symbol, params = {}) {
+        await this.loadMarkets ();
         let market = this.market (symbol);
         let orderbook = await this.currentGetOrderBookPairAskCountBidCountDepth (this.extend ({
             'pair': market['id'],
@@ -4423,6 +4435,7 @@ module.exports = class coingi extends Exchange {
     }
 
     async fetchTickers (symbols = undefined, params = {}) {
+        await this.loadMarkets ();
         let response = await this.currentGet24hourRollingAggregation (params);
         let result = {};
         for (let t = 0; t < response.length; t++) {
@@ -4437,6 +4450,7 @@ module.exports = class coingi extends Exchange {
     }
 
     async fetchTicker (symbol, params = {}) {
+        await this.loadMarkets ();
         let tickers = await this.fetchTickers (undefined, params);
         if (symbol in tickers)
             return tickers[symbol];
@@ -4460,6 +4474,7 @@ module.exports = class coingi extends Exchange {
     }
 
     async fetchTrades (symbol, since = undefined, limit = undefined, params = {}) {
+        await this.loadMarkets ();
         let market = this.market (symbol);
         let response = await this.currentGetTransactionsPairMaxCount (this.extend ({
             'pair': market['id'],
@@ -4469,6 +4484,7 @@ module.exports = class coingi extends Exchange {
     }
 
     async createOrder (symbol, type, side, amount, price = undefined, params = {}) {
+        await this.loadMarkets ();
         let order = {
             'currencyPair': this.marketId (symbol),
             'volume': amount,
@@ -4483,6 +4499,7 @@ module.exports = class coingi extends Exchange {
     }
 
     async cancelOrder (id, symbol = undefined, params = {}) {
+        await this.loadMarkets ();
         return await this.userPostCancelOrder ({ 'orderId': id });
     }
 
@@ -4493,6 +4510,7 @@ module.exports = class coingi extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             let request = this.extend ({
                 'token': this.apiKey,
@@ -4528,7 +4546,7 @@ module.exports = class coingi extends Exchange {
 // ---------------------------------------------------------------------------
 
 const hitbtc = __webpack_require__ ("6eNB")
-const { ExchangeError } = __webpack_require__ ("AnAA")
+const { ExchangeError, OrderNotFound } = __webpack_require__ ("AnAA")
 
 // ---------------------------------------------------------------------------
 
@@ -4542,19 +4560,43 @@ module.exports = class hitbtc2 extends hitbtc {
             'rateLimit': 1500,
             'version': '2',
             'hasCORS': true,
+            // older metainfo interface
+            'hasFetchOHLCV': true,
             'hasFetchTickers': true,
+            'hasFetchOrder': true,
             'hasFetchOrders': false,
-            'hasFetchOpenOrders': false,
-            'hasFetchClosedOrders': false,
+            'hasFetchOpenOrders': true,
+            'hasFetchClosedOrders': true,
+            'hasFetchMyTrades': true,
             'hasWithdraw': true,
+            // new metainfo interface
+            'has': {
+                'fetchOHLCV': true,
+                'fetchTickers': true,
+                'fetchOrder': true,
+                'fetchOrders': false,
+                'fetchOpenOrders': true,
+                'fetchClosedOrders': true,
+                'fetchMyTrades': true,
+                'withdraw': true,
+            },
+            'timeframes': {
+                '1m': 'M1',
+                '3m': 'M3',
+                '5m': 'M5',
+                '15m': 'M15',
+                '30m': 'M30', // default
+                '1h': 'H1',
+                '4h': 'H4',
+                '1d': 'D1',
+                '1w': 'D7',
+                '1M': '1M',
+            },
             'urls': {
                 'logo': 'https://user-images.githubusercontent.com/1294454/27766555-8eaec20e-5edc-11e7-9c5b-6dc69fc42f5e.jpg',
                 'api': 'https://api.hitbtc.com',
                 'www': 'https://hitbtc.com',
-                'doc': [
-                    'https://api.hitbtc.com/api/2/explore',
-                    'https://github.com/hitbtc-com/hitbtc-api/blob/master/APIv2.md',
-                ],
+                'doc': 'https://api.hitbtc.com',
             },
             'api': {
                 'public': {
@@ -4567,6 +4609,7 @@ module.exports = class hitbtc2 extends hitbtc {
                         'ticker/{symbol}', // Ticker for symbol
                         'trades/{symbol}', // Trades
                         'orderbook/{symbol}', // Orderbook
+                        'candles/{symbol}', // Candles
                     ],
                 },
                 'private': {
@@ -4622,6 +4665,10 @@ module.exports = class hitbtc2 extends hitbtc {
         return currency;
     }
 
+    feeToPrecision (symbol, fee) {
+        return this.truncate (fee, 8);
+    }
+
     async fetchMarkets () {
         let markets = await this.publicGetSymbol ();
         let result = [];
@@ -4630,35 +4677,52 @@ module.exports = class hitbtc2 extends hitbtc {
             let id = market['id'];
             let base = market['baseCurrency'];
             let quote = market['quoteCurrency'];
-            let lot = market['quantityIncrement'];
-            let step = parseFloat (market['tickSize']);
             base = this.commonCurrencyCode (base);
             quote = this.commonCurrencyCode (quote);
             let symbol = base + '/' + quote;
+            let lot = parseFloat (market['quantityIncrement']);
+            let step = parseFloat (market['tickSize']);
             let precision = {
-                'price': 2,
-                'amount': -1 * Math.log10(step),
+                'price': this.precisionFromString (market['tickSize']),
+                'amount': this.precisionFromString (market['quantityIncrement']),
             };
-            let amountLimits = { 'min': lot };
-            let limits = { 'amount': amountLimits };
-            result.push ({
+            let taker = parseFloat (market['takeLiquidityRate']);
+            let maker = parseFloat (market['provideLiquidityRate']);
+            result.push (this.extend (this.fees['trading'], {
+                'info': market,
                 'id': id,
                 'symbol': symbol,
                 'base': base,
                 'quote': quote,
                 'lot': lot,
                 'step': step,
-                'info': market,
+                'taker': taker,
+                'maker': maker,
                 'precision': precision,
-                'limits': limits,
-            });
+                'limits': {
+                    'amount': {
+                        'min': lot,
+                        'max': undefined,
+                    },
+                    'price': {
+                        'min': step,
+                        'max': undefined,
+                    },
+                    'cost': {
+                        'min': undefined,
+                        'max': undefined,
+                    },
+                },
+            }));
         }
         return result;
     }
 
     async fetchBalance (params = {}) {
         await this.loadMarkets ();
-        let balances = await this.privateGetTradingBalance ();
+        let type = this.safeString (params, 'type', 'trading');
+        let method = 'privateGet' + this.capitalize (type) + 'Balance';
+        let balances = await this[method] ();
         let result = { 'info': balances };
         for (let b = 0; b < balances.length; b++) {
             let balance = balances[b];
@@ -4673,6 +4737,31 @@ module.exports = class hitbtc2 extends hitbtc {
             result[currency] = account;
         }
         return this.parseBalance (result);
+    }
+
+    parseOHLCV (ohlcv, market = undefined, timeframe = '1d', since = undefined, limit = undefined) {
+        let timestamp = this.parse8601 (ohlcv['timestamp']);
+        return [
+            timestamp,
+            parseFloat (ohlcv['open']),
+            parseFloat (ohlcv['max']),
+            parseFloat (ohlcv['min']),
+            parseFloat (ohlcv['close']),
+            parseFloat (ohlcv['volumeQuote']),
+        ];
+    }
+
+    async fetchOHLCV (symbol, timeframe = '1m', since = undefined, limit = undefined, params = {}) {
+        await this.loadMarkets ();
+        let market = this.market (symbol);
+        let request = {
+            'symbol': market['id'],
+            'period': this.timeframes[timeframe],
+        };
+        if (limit)
+            request['limit'] = limit;
+        let response = await this.publicGetCandlesSymbol (this.extend (request, params));
+        return this.parseOHLCVs (response, market, timeframe, since, limit);
     }
 
     async fetchOrderBook (symbol, params = {}) {
@@ -4737,16 +4826,45 @@ module.exports = class hitbtc2 extends hitbtc {
 
     parseTrade (trade, market = undefined) {
         let timestamp = this.parse8601 (trade['timestamp']);
+        let symbol = undefined;
+        if (market) {
+            symbol = market['symbol'];
+        } else {
+            let id = trade['symbol'];
+            if (id in this.markets_by_id) {
+                market = this.markets_by_id[id];
+                symbol = market['symbol'];
+            } else {
+                symbol = id;
+            }
+        }
+        let fee = undefined;
+        if ('fee' in trade) {
+            let currency = market ? market['quote'] : undefined;
+            fee = {
+                'cost': parseFloat (trade['fee']),
+                'currency': currency,
+            };
+        }
+        let orderId = undefined;
+        if ('clientOrderId' in trade)
+            orderId = trade['clientOrderId'];
+        let price = parseFloat (trade['price']);
+        let amount = parseFloat (trade['quantity']);
+        let cost = price * amount;
         return {
             'info': trade,
             'id': trade['id'].toString (),
+            'order': orderId,
             'timestamp': timestamp,
             'datetime': this.iso8601 (timestamp),
-            'symbol': market['symbol'],
+            'symbol': symbol,
             'type': undefined,
             'side': trade['side'],
-            'price': parseFloat (trade['price']),
-            'amount': parseFloat (trade['quantity']),
+            'price': price,
+            'amount': amount,
+            'cost': cost,
+            'fee': fee,
         };
     }
 
@@ -4764,24 +4882,23 @@ module.exports = class hitbtc2 extends hitbtc {
         let market = this.market (symbol);
         let clientOrderId = this.milliseconds ();
         amount = parseFloat (amount);
-        let order = {
+        let request = {
             'clientOrderId': clientOrderId.toString (),
             'symbol': market['id'],
             'side': side,
-            'quantity': amount.toString (),
+            'quantity': this.amountToPrecision (symbol, amount),
             'type': type,
         };
         if (type == 'limit') {
-            price = parseFloat (price);
-            order['price'] = price.toFixed (10);
+            request['price'] = this.priceToPrecision (symbol, price);
         } else {
-            order['timeInForce'] = 'FOK';
+            request['timeInForce'] = 'FOK';
         }
-        let response = await this.privatePostOrder (this.extend (order, params));
-        return {
-            'info': response,
-            'id': response['clientOrderId'],
-        };
+        let response = await this.privatePostOrder (this.extend (request, params));
+        let order = this.parseOrder (response);
+        let id = order['id'];
+        this.orders[id] = order;
+        return order;
     }
 
     async cancelOrder (id, symbol = undefined, params = {}) {
@@ -4792,20 +4909,40 @@ module.exports = class hitbtc2 extends hitbtc {
     }
 
     parseOrder (order, market = undefined) {
-        let timestamp = this.parse8601 (order['updatedAt']);
+        let created = undefined;
+        if ('createdAt' in order)
+            created = this.parse8601 (order['createdAt']);
+        let updated = undefined;
+        if ('updatedAt' in order)
+            updated = this.parse8601 (order['updatedAt']);
         if (!market)
             market = this.markets_by_id[order['symbol']];
         let symbol = market['symbol'];
         let amount = this.safeFloat (order, 'quantity');
         let filled = this.safeFloat (order, 'cumQuantity');
+        let status = order['status'];
+        if (status == 'new') {
+            status = 'open';
+        } else if (status == 'suspended') {
+            status = 'open';
+        } else if (status == 'partiallyFilled') {
+            status = 'open';
+        } else if (status == 'filled') {
+            status = 'closed';
+        }
         let remaining = undefined;
-        if (amount && filled)
-            remaining = amount - filled;
+        if (typeof amount != 'undefined') {
+            if (typeof filled != 'undefined') {
+                remaining = amount - filled;
+            }
+        }
         return {
             'id': order['clientOrderId'].toString (),
-            'timestamp': timestamp,
-            'datetime': this.iso8601 (timestamp),
-            'status': order['status'],
+            'timestamp': created,
+            'datetime': this.iso8601 (created),
+            'created': created,
+            'updated': updated,
+            'status': status,
             'symbol': symbol,
             'type': order['type'],
             'side': order['side'],
@@ -4820,21 +4957,66 @@ module.exports = class hitbtc2 extends hitbtc {
 
     async fetchOrder (id, symbol = undefined, params = {}) {
         await this.loadMarkets ();
-        let response = await this.privateGetOrder (this.extend ({
-            'client_order_id': id,
+        let response = await this.privateGetHistoryOrder (this.extend ({
+            'clientOrderId': id,
         }, params));
-        return this.parseOrder (response['orders'][0]);
+        let numOrders = response.length;
+        if (numOrders > 0)
+            return this.parseOrder (response[0]);
+        throw OrderNotFound (this.id + ' order ' + id + ' not found');
     }
 
     async fetchOpenOrders (symbol = undefined, since = undefined, limit = undefined, params = {}) {
         await this.loadMarkets ();
         let market = undefined;
+        let request = {};
         if (symbol) {
             market = this.market (symbol);
-            params = this.extend ({'symbol': market['id']});
+            request['symbol'] = market['id'];
         }
-        let response = await this.privateGetOrder (params);
+        let response = await this.privateGetOrder (this.extend (request, params));
         return this.parseOrders (response, market);
+    }
+
+    async fetchClosedOrders (symbol = undefined, since = undefined, limit = undefined, params = {}) {
+        await this.loadMarkets ();
+        let market = undefined;
+        let request = {};
+        if (symbol) {
+            market = this.market (symbol);
+            request['symbol'] = market['id'];
+        }
+        if (limit)
+            request['limit'] = limit;
+        if (since) {
+            request['from'] = this.iso8601 (since);
+        }
+        let response = await this.privateGetHistoryOrder (this.extend (request, params));
+        return this.parseOrders (response, market);
+    }
+
+    async fetchMyTrades (symbol = undefined, since = undefined, limit = undefined, params = {}) {
+        await this.loadMarkets ();
+        let request = {
+            // 'symbol': 'BTC/USD', // optional
+            // 'sort': 'DESC', // or 'ASC'
+            // 'by': 'timestamp', // or 'id'	String	timestamp by default, or id
+            // 'from':	'Datetime or Number', // ISO 8601
+            // 'till':	'Datetime or Number',
+            // 'limit': 100,
+            // 'offset': 0,
+        };
+        let market = undefined;
+        if (symbol) {
+            market = this.market (symbol);
+            request['symbol'] = market['id'];
+        }
+        if (since)
+            request['from'] = this.iso8601 (since);
+        if (limit)
+            request['limit'] = limit;
+        let response = await this.privateGetHistoryTrades (this.extend (request, params));
+        return this.parseTrades (response, market);
     }
 
     async withdraw (currency, amount, address, params = {}) {
@@ -4859,10 +5041,15 @@ module.exports = class hitbtc2 extends hitbtc {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
-            url += this.implodeParams (path, params) + '?' + this.urlencode (query);
-            if (method != 'GET')
+            this.checkRequiredCredentials ();
+            url += this.implodeParams (path, params);
+            if (method == 'GET') {
+                if (Object.keys (query).length)
+                    url += '?' + this.urlencode (query);
+            } else {
                 if (Object.keys (query).length)
                     body = this.json (query);
+            }
             let payload = this.encode (this.apiKey + ':' + this.secret);
             let auth = this.stringToBase64 (payload);
             headers = {
@@ -4872,6 +5059,25 @@ module.exports = class hitbtc2 extends hitbtc {
         }
         url = this.urls['api'] + url;
         return { 'url': url, 'method': method, 'body': body, 'headers': headers };
+    }
+
+    handleErrors (code, reason, url, method, headers, body) {
+        if (code == 400) {
+            if (body[0] == "{") {
+                let response = JSON.parse (body);
+                if ('error' in response) {
+                    if ('message' in response['error']) {
+                        let message = response['error']['message'];
+                        if (message == 'Order not found') {
+                            throw new OrderNotFound (this.id + ' order not found in active orders');
+                        } else if (message == 'Insufficient funds') {
+                            throw new InsufficientFunds (this.id + ' ' + message);
+                        }
+                    }
+                }
+            }
+            throw new ExchangeError (this.id + ' ' + body);
+        }
     }
 
     async request (path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined) {
@@ -5255,51 +5461,6 @@ exports.clearImmediate = clearImmediate;
 
 /***/ }),
 
-/***/ "1sg+":
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(module) {const isNode = (typeof window === 'undefined')
-
-// using module.require to prevent Webpack / React Native from trying to include it
-const nodeFetch = isNode && module.require ('node-fetch')
-
-// native Fetch API (in newer browsers)
-const windowFetch = (typeof window !== 'undefined' && window.fetch)
-
-// a quick ad-hoc polyfill (for older browsers)
-const xhrFetch = (url, options, verbose = false) =>
-    new Promise ((resolve, reject) => {
-
-        if (verbose)
-            console.log (url, options)
-
-        const xhr = new XMLHttpRequest ()
-        const method = options.method || 'GET'
-
-        xhr.open (method, url, true)
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState == 4) {
-                if (xhr.status == 200)
-                    resolve (xhr.responseText)
-                else { // [403, 404, ...].indexOf (xhr.status) >= 0
-                    throw new Error (method, url, xhr.status, xhr.responseText)
-                }
-            }
-        }
-
-        if (typeof options.headers != 'undefined')
-            for (var header in options.headers)
-                xhr.setRequestHeader (header, options.headers[header])
-
-        xhr.send (options.body)
-    })
-
-module.exports = nodeFetch || windowFetch || xhrFetch
-
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__("3IRH")(module)))
-
-/***/ }),
-
 /***/ "1uyL":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -5331,6 +5492,10 @@ module.exports = class coinsecure extends Exchange {
                     'https://api.coinsecure.in',
                     'https://github.com/coinsecure/plugins',
                 ],
+            },
+            'requiredCredentials': {
+                'apiKey': true,
+                'secret': false,
             },
             'api': {
                 'public': {
@@ -5463,6 +5628,12 @@ module.exports = class coinsecure extends Exchange {
             'markets': {
                 'BTC/INR': { 'id': 'BTC/INR', 'symbol': 'BTC/INR', 'base': 'BTC', 'quote': 'INR' },
             },
+            'fees': {
+                'trading': {
+                    'maker': 0.4 / 100,
+                    'taker': 0.4 / 100,
+                },
+            },
         });
     }
 
@@ -5564,6 +5735,7 @@ module.exports = class coinsecure extends Exchange {
         let url = this.urls['api'] + '/' + this.version + '/' + this.implodeParams (path, params);
         let query = this.omit (params, this.extractParams (path));
         if (api == 'private') {
+            this.checkRequiredCredentials ();
             headers = { 'Authorization': this.apiKey };
             if (Object.keys (query).length) {
                 body = this.json (query);
@@ -5780,6 +5952,7 @@ module.exports = class gemini extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             let request = this.extend ({
                 'request': url,
@@ -5830,35 +6003,6 @@ var id = 0;
 var px = Math.random();
 module.exports = function (key) {
   return 'Symbol('.concat(key === undefined ? '' : key, ')_', (++id + px).toString(36));
-};
-
-
-/***/ }),
-
-/***/ "3IRH":
-/***/ (function(module, exports) {
-
-module.exports = function(module) {
-	if(!module.webpackPolyfill) {
-		module.deprecate = function() {};
-		module.paths = [];
-		// module.parent = undefined by default
-		if(!module.children) module.children = [];
-		Object.defineProperty(module, "loaded", {
-			enumerable: true,
-			get: function() {
-				return module.l;
-			}
-		});
-		Object.defineProperty(module, "id", {
-			enumerable: true,
-			get: function() {
-				return module.i;
-			}
-		});
-		module.webpackPolyfill = 1;
-	}
-	return module;
 };
 
 
@@ -7189,6 +7333,7 @@ module.exports = class fybse extends Exchange {
         if (api == 'public') {
             url += '.json';
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             body = this.urlencode (this.extend ({ 'timestamp': nonce }, params));
             headers = {
@@ -7275,7 +7420,7 @@ module.exports = class bl3p extends Exchange {
                 },
             },
             'markets': {
-                'BTC/EUR': { 'id': 'BTCEUR', 'symbol': 'BTC/EUR', 'base': 'BTC', 'quote': 'EUR' },
+                'BTC/EUR': { 'id': 'BTCEUR', 'symbol': 'BTC/EUR', 'base': 'BTC', 'quote': 'EUR', 'maker': 0.0025, 'taker': 0.0025 },
                 // 'LTC/EUR': { 'id': 'LTCEUR', 'symbol': 'LTC/EUR', 'base': 'LTC', 'quote': 'EUR' },
             },
         });
@@ -7404,6 +7549,7 @@ module.exports = class bl3p extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             body = this.urlencode (this.extend ({ 'nonce': nonce }, query));
             let secret = this.base64ToBinary (this.secret);
@@ -7454,11 +7600,7 @@ module.exports = class hitbtc extends Exchange {
                 'logo': 'https://user-images.githubusercontent.com/1294454/27766555-8eaec20e-5edc-11e7-9c5b-6dc69fc42f5e.jpg',
                 'api': 'http://api.hitbtc.com',
                 'www': 'https://hitbtc.com',
-                'doc': [
-                    'https://hitbtc.com/api',
-                    'http://hitbtc-com.github.io/hitbtc-api',
-                    'http://jsfiddle.net/bmknight/RqbYB',
-                ],
+                'doc': 'https://github.com/hitbtc-com/hitbtc-api/blob/master/APIv1.md',
             },
             'api': {
                 'public': {
@@ -7764,28 +7906,32 @@ module.exports = class hitbtc extends Exchange {
     async fetchOpenOrders (symbol = undefined, since = undefined, limit = undefined, params = {}) {
         await this.loadMarkets ();
         let statuses = [ 'new', 'partiallyFiiled' ];
-        let market = this.market (symbol);
+        let market = undefined;
         let request = {
             'sort': 'desc',
             'statuses': statuses.join (','),
         };
-        if (market)
+        if (symbol) {
+            market = this.market (symbol);
             request['symbols'] = market['id'];
+        }
         let response = await this.tradingGetOrdersActive (this.extend (request, params));
         return this.parseOrders (response['orders'], market);
     }
 
     async fetchClosedOrders (symbol = undefined, since = undefined, limit = undefined, params = {}) {
         await this.loadMarkets ();
-        let market = this.market (symbol);
+        let market = undefined;
         let statuses = [ 'filled', 'canceled', 'rejected', 'expired' ];
         let request = {
             'sort': 'desc',
             'statuses': statuses.join (','),
             'max_results': 1000,
         };
-        if (market)
+        if (symbol) {
+            market = this.market (symbol);
             request['symbols'] = market['id'];
+        }
         let response = await this.tradingGetOrdersRecent (this.extend (request, params));
         return this.parseOrders (response['orders'], market);
     }
@@ -7814,6 +7960,7 @@ module.exports = class hitbtc extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             let payload = { 'nonce': nonce, 'apikey': this.apiKey };
             query = this.extend (payload, query);
@@ -8059,8 +8206,8 @@ module.exports = class southxchange extends Exchange {
             'change': this.safeFloat (ticker, 'Variation24Hr'),
             'percentage': undefined,
             'average': undefined,
-            'baseVolume': undefined,
-            'quoteVolume': this.safeFloat (ticker, 'Volume24Hr'),
+            'baseVolume': this.safeFloat (ticker, 'Volume24Hr'),
+            'quoteVolume': undefined,
             'info': ticker,
         };
     }
@@ -8156,6 +8303,7 @@ module.exports = class southxchange extends Exchange {
         let url = this.urls['api'] + '/' + this.implodeParams (path, params);
         let query = this.omit (params, this.extractParams (path));
         if (api == 'private') {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             query = this.extend ({
                 'key': this.apiKey,
@@ -8250,11 +8398,13 @@ module.exports = throttle
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(global, setImmediate) {/*!
- * Vue.js v2.5.3
+ * Vue.js v2.5.6
  * (c) 2014-2017 Evan You
  * Released under the MIT License.
  */
 /*  */
+
+var emptyObject = Object.freeze({});
 
 // these helpers produces better vm code in JS engines due to their
 // explicitness and function inlining
@@ -8673,8 +8823,6 @@ var config = ({
 
 /*  */
 
-var emptyObject = Object.freeze({});
-
 /**
  * Check if a string starts with $ or _
  */
@@ -8715,17 +8863,20 @@ function parsePath (path) {
 
 /*  */
 
+
 // can we use __proto__?
 var hasProto = '__proto__' in {};
 
 // Browser environment sniffing
 var inBrowser = typeof window !== 'undefined';
+var inWeex = typeof WXEnvironment !== 'undefined' && !!WXEnvironment.platform;
+var weexPlatform = inWeex && WXEnvironment.platform.toLowerCase();
 var UA = inBrowser && window.navigator.userAgent.toLowerCase();
 var isIE = UA && /msie|trident/.test(UA);
 var isIE9 = UA && UA.indexOf('msie 9.0') > 0;
 var isEdge = UA && UA.indexOf('edge/') > 0;
-var isAndroid = UA && UA.indexOf('android') > 0;
-var isIOS = UA && /iphone|ipad|ipod|ios/.test(UA);
+var isAndroid = (UA && UA.indexOf('android') > 0) || (weexPlatform === 'android');
+var isIOS = (UA && /iphone|ipad|ipod|ios/.test(UA)) || (weexPlatform === 'ios');
 var isChrome = UA && /chrome\/\d+/.test(UA) && !isEdge;
 
 // Firefox has a "watch" function on Object.prototype...
@@ -9940,7 +10091,7 @@ function logError (err, vm, info) {
     warn(("Error in " + info + ": \"" + (err.toString()) + "\""), vm);
   }
   /* istanbul ignore else */
-  if (inBrowser && typeof console !== 'undefined') {
+  if ((inBrowser || inWeex) && typeof console !== 'undefined') {
     console.error(err);
   } else {
     throw err
@@ -10160,6 +10311,43 @@ if (false) {
       vm._renderProxy = vm;
     }
   };
+}
+
+/*  */
+
+var seenObjects = new _Set();
+
+/**
+ * Recursively traverse an object to evoke all converted
+ * getters, so that every nested property inside the object
+ * is collected as a "deep" dependency.
+ */
+function traverse (val) {
+  _traverse(val, seenObjects);
+  seenObjects.clear();
+}
+
+function _traverse (val, seen) {
+  var i, keys;
+  var isA = Array.isArray(val);
+  if ((!isA && !isObject(val)) || !Object.isExtensible(val)) {
+    return
+  }
+  if (val.__ob__) {
+    var depId = val.__ob__.dep.id;
+    if (seen.has(depId)) {
+      return
+    }
+    seen.add(depId);
+  }
+  if (isA) {
+    i = val.length;
+    while (i--) { _traverse(val[i], seen); }
+  } else {
+    keys = Object.keys(val);
+    i = keys.length;
+    while (i--) { _traverse(val[keys[i]], seen); }
+  }
 }
 
 /*  */
@@ -10757,7 +10945,7 @@ function resolveSlots (
 }
 
 function isWhitespace (node) {
-  return node.isComment || node.text === ' '
+  return (node.isComment && !node.asyncFactory) || node.text === ' '
 }
 
 function resolveScopedSlots (
@@ -11436,40 +11624,6 @@ Watcher.prototype.teardown = function teardown () {
   }
 };
 
-/**
- * Recursively traverse an object to evoke all converted
- * getters, so that every nested property inside the object
- * is collected as a "deep" dependency.
- */
-var seenObjects = new _Set();
-function traverse (val) {
-  seenObjects.clear();
-  _traverse(val, seenObjects);
-}
-
-function _traverse (val, seen) {
-  var i, keys;
-  var isA = Array.isArray(val);
-  if ((!isA && !isObject(val)) || !Object.isExtensible(val)) {
-    return
-  }
-  if (val.__ob__) {
-    var depId = val.__ob__.dep.id;
-    if (seen.has(depId)) {
-      return
-    }
-    seen.add(depId);
-  }
-  if (isA) {
-    i = val.length;
-    while (i--) { _traverse(val[i], seen); }
-  } else {
-    keys = Object.keys(val);
-    i = keys.length;
-    while (i--) { _traverse(val[keys[i]], seen); }
-  }
-}
-
 /*  */
 
 var sharedPropertyDefinition = {
@@ -12046,12 +12200,19 @@ function bindObjectProps (
  */
 function renderStatic (
   index,
-  isInFor
+  isInFor,
+  isOnce
 ) {
-  // static trees can be rendered once and cached on the contructor options
-  // so every instance shares the same cached trees
-  var options = this.$options;
-  var cached = options.cached || (options.cached = []);
+  // render fns generated by compiler < 2.5.4 does not provide v-once
+  // information to runtime so be conservative
+  var isOldVersion = arguments.length < 3;
+  // if a static tree is generated by v-once, it is cached on the instance;
+  // otherwise it is purely static and can be cached on the shared options
+  // across all instances.
+  var renderFns = this.$options.staticRenderFns;
+  var cached = isOldVersion || isOnce
+    ? (this._staticTrees || (this._staticTrees = []))
+    : (renderFns.cached || (renderFns.cached = []));
   var tree = cached[index];
   // if has already-rendered static tree and not inside v-for,
   // we can reuse the same tree by doing a shallow clone.
@@ -12061,7 +12222,7 @@ function renderStatic (
       : cloneVNode(tree)
   }
   // otherwise, render a fresh tree.
-  tree = cached[index] = options.staticRenderFns[index].call(this._renderProxy, null, this);
+  tree = cached[index] = renderFns[index].call(this._renderProxy, null, this);
   markStatic(tree, ("__static__" + index), false);
   return tree
 }
@@ -12592,6 +12753,7 @@ function applyNS (vnode, ns, force) {
 
 function initRender (vm) {
   vm._vnode = null; // the root of the child tree
+  vm._staticTrees = null; // v-once cached trees
   var options = vm.$options;
   var parentVnode = vm.$vnode = options._parentVnode; // the placeholder node in parent tree
   var renderContext = parentVnode && parentVnode.context;
@@ -12643,7 +12805,9 @@ function renderMixin (Vue) {
       // last render. They need to be cloned to ensure "freshness" for this render.
       for (var key in vm.$slots) {
         var slot = vm.$slots[key];
-        if (slot._rendered) {
+        // _rendered is a flag added by renderSlot, but may not be present
+        // if the slot is passed from manually written render functions
+        if (slot._rendered || (slot[0] && slot[0].elm)) {
           vm.$slots[key] = cloneVNodes(slot, true /* deep */);
         }
       }
@@ -13094,12 +13258,13 @@ var KeepAlive = {
   },
 
   render: function render () {
-    var vnode = getFirstComponentChild(this.$slots.default);
+    var slot = this.$slots.default;
+    var vnode = getFirstComponentChild(slot);
     var componentOptions = vnode && vnode.componentOptions;
     if (componentOptions) {
       // check pattern
       var name = getComponentName(componentOptions);
-      if (name && (
+      if (!name || (
         (this.exclude && matches(this.exclude, name)) ||
         (this.include && !matches(this.include, name))
       )) {
@@ -13130,7 +13295,7 @@ var KeepAlive = {
 
       vnode.data.keepAlive = true;
     }
-    return vnode
+    return vnode || (slot && slot[0])
   }
 };
 
@@ -13197,7 +13362,7 @@ Object.defineProperty(Vue$3.prototype, '$ssrContext', {
   }
 });
 
-Vue$3.version = '2.5.3';
+Vue$3.version = '2.5.6';
 
 /*  */
 
@@ -13624,7 +13789,23 @@ function createPatchFunction (backend) {
     }
   }
 
-  var inPre = 0;
+  function isUnknownElement$$1 (vnode, inVPre) {
+    return (
+      !inVPre &&
+      !vnode.ns &&
+      !(
+        config.ignoredElements.length &&
+        config.ignoredElements.some(function (ignore) {
+          return isRegExp(ignore)
+            ? ignore.test(vnode.tag)
+            : ignore === vnode.tag
+        })
+      ) &&
+      config.isUnknownElement(vnode.tag)
+    )
+  }
+
+  var creatingElmInVPre = 0;
   function createElm (vnode, insertedVnodeQueue, parentElm, refElm, nested) {
     vnode.isRootInsert = !nested; // for transition enter check
     if (createComponent(vnode, insertedVnodeQueue, parentElm, refElm)) {
@@ -13637,21 +13818,9 @@ function createPatchFunction (backend) {
     if (isDef(tag)) {
       if (false) {
         if (data && data.pre) {
-          inPre++;
+          creatingElmInVPre++;
         }
-        if (
-          !inPre &&
-          !vnode.ns &&
-          !(
-            config.ignoredElements.length &&
-            config.ignoredElements.some(function (ignore) {
-              return isRegExp(ignore)
-                ? ignore.test(tag)
-                : ignore === tag
-            })
-          ) &&
-          config.isUnknownElement(tag)
-        ) {
+        if (isUnknownElement$$1(vnode, creatingElmInVPre)) {
           warn(
             'Unknown custom element: <' + tag + '> - did you ' +
             'register the component correctly? For recursive components, ' +
@@ -13675,7 +13844,7 @@ function createPatchFunction (backend) {
       }
 
       if (false) {
-        inPre--;
+        creatingElmInVPre--;
       }
     } else if (isTrue(vnode.isComment)) {
       vnode.elm = nodeOps.createComment(vnode.text);
@@ -14030,27 +14199,32 @@ function createPatchFunction (backend) {
     }
   }
 
-  var bailed = false;
+  var hydrationBailed = false;
   // list of modules that can skip create hook during hydration because they
   // are already rendered on the client or has no need for initialization
-  var isRenderedModule = makeMap('attrs,style,class,staticClass,staticStyle,key');
+  // Note: style is excluded because it relies on initial clone for future
+  // deep updates (#7063).
+  var isRenderedModule = makeMap('attrs,class,staticClass,staticStyle,key');
 
   // Note: this is a browser-only function so we can assume elms are DOM nodes.
-  function hydrate (elm, vnode, insertedVnodeQueue) {
-    if (isTrue(vnode.isComment) && isDef(vnode.asyncFactory)) {
-      vnode.elm = elm;
-      vnode.isAsyncPlaceholder = true;
-      return true
-    }
-    if (false) {
-      if (!assertNodeMatch(elm, vnode)) {
-        return false
-      }
-    }
-    vnode.elm = elm;
+  function hydrate (elm, vnode, insertedVnodeQueue, inVPre) {
+    var i;
     var tag = vnode.tag;
     var data = vnode.data;
     var children = vnode.children;
+    inVPre = inVPre || (data && data.pre);
+    vnode.elm = elm;
+
+    if (isTrue(vnode.isComment) && isDef(vnode.asyncFactory)) {
+      vnode.isAsyncPlaceholder = true;
+      return true
+    }
+    // assert node match
+    if (false) {
+      if (!assertNodeMatch(elm, vnode, inVPre)) {
+        return false
+      }
+    }
     if (isDef(data)) {
       if (isDef(i = data.hook) && isDef(i = i.init)) { i(vnode, true /* hydrating */); }
       if (isDef(i = vnode.componentInstance)) {
@@ -14071,7 +14245,7 @@ function createPatchFunction (backend) {
               /* istanbul ignore if */
               if (false
               ) {
-                bailed = true;
+                hydrationBailed = true;
                 console.warn('Parent: ', elm);
                 console.warn('server innerHTML: ', i);
                 console.warn('client innerHTML: ', elm.innerHTML);
@@ -14083,7 +14257,7 @@ function createPatchFunction (backend) {
             var childrenMatch = true;
             var childNode = elm.firstChild;
             for (var i$1 = 0; i$1 < children.length; i$1++) {
-              if (!childNode || !hydrate(childNode, children[i$1], insertedVnodeQueue)) {
+              if (!childNode || !hydrate(childNode, children[i$1], insertedVnodeQueue, inVPre)) {
                 childrenMatch = false;
                 break
               }
@@ -14095,7 +14269,7 @@ function createPatchFunction (backend) {
               /* istanbul ignore if */
               if (false
               ) {
-                bailed = true;
+                hydrationBailed = true;
                 console.warn('Parent: ', elm);
                 console.warn('Mismatching childNodes vs. VNodes: ', elm.childNodes, children);
               }
@@ -14105,11 +14279,17 @@ function createPatchFunction (backend) {
         }
       }
       if (isDef(data)) {
+        var fullInvoke = false;
         for (var key in data) {
           if (!isRenderedModule(key)) {
+            fullInvoke = true;
             invokeCreateHooks(vnode, insertedVnodeQueue);
             break
           }
+        }
+        if (!fullInvoke && data['class']) {
+          // ensure collecting deps for deep class bindings for future updates
+          traverse(data['class']);
         }
       }
     } else if (elm.data !== vnode.text) {
@@ -14118,10 +14298,10 @@ function createPatchFunction (backend) {
     return true
   }
 
-  function assertNodeMatch (node, vnode) {
+  function assertNodeMatch (node, vnode, inVPre) {
     if (isDef(vnode.tag)) {
-      return (
-        vnode.tag.indexOf('vue-component') === 0 ||
+      return vnode.tag.indexOf('vue-component') === 0 || (
+        !isUnknownElement$$1(vnode, inVPre) &&
         vnode.tag.toLowerCase() === (node.tagName && node.tagName.toLowerCase())
       )
     } else {
@@ -14609,6 +14789,7 @@ function addHandler (
   important,
   warn
 ) {
+  modifiers = modifiers || emptyObject;
   // warn prevent and passive modifier
   /* istanbul ignore if */
   if (
@@ -14619,28 +14800,47 @@ function addHandler (
       'Passive handler can\'t prevent default event.'
     );
   }
+
   // check capture modifier
-  if (modifiers && modifiers.capture) {
+  if (modifiers.capture) {
     delete modifiers.capture;
     name = '!' + name; // mark the event as captured
   }
-  if (modifiers && modifiers.once) {
+  if (modifiers.once) {
     delete modifiers.once;
     name = '~' + name; // mark the event as once
   }
   /* istanbul ignore if */
-  if (modifiers && modifiers.passive) {
+  if (modifiers.passive) {
     delete modifiers.passive;
     name = '&' + name; // mark the event as passive
   }
+
+  // normalize click.right and click.middle since they don't actually fire
+  // this is technically browser-specific, but at least for now browsers are
+  // the only target envs that have right/middle clicks.
+  if (name === 'click') {
+    if (modifiers.right) {
+      name = 'contextmenu';
+      delete modifiers.right;
+    } else if (modifiers.middle) {
+      name = 'mouseup';
+    }
+  }
+
   var events;
-  if (modifiers && modifiers.native) {
+  if (modifiers.native) {
     delete modifiers.native;
     events = el.nativeEvents || (el.nativeEvents = {});
   } else {
     events = el.events || (el.events = {});
   }
-  var newHandler = { value: value, modifiers: modifiers };
+
+  var newHandler = { value: value };
+  if (modifiers !== emptyObject) {
+    newHandler.modifiers = modifiers;
+  }
+
   var handlers = events[name];
   /* istanbul ignore if */
   if (Array.isArray(handlers)) {
@@ -14971,6 +15171,19 @@ function genDefaultModel (
   modifiers
 ) {
   var type = el.attrsMap.type;
+
+  // warn if v-bind:value conflicts with v-model
+  if (false) {
+    var value$1 = el.attrsMap['v-bind:value'] || el.attrsMap[':value'];
+    if (value$1) {
+      var binding = el.attrsMap['v-bind:value'] ? 'v-bind:value' : ':value';
+      warn$1(
+        binding + "=\"" + value$1 + "\" conflicts with v-model on the same element " +
+        'because the latter already expands to a value binding internally'
+      );
+    }
+  }
+
   var ref = modifiers || {};
   var lazy = ref.lazy;
   var number = ref.number;
@@ -15734,12 +15947,12 @@ function leave (vnode, rm) {
   }
 
   var data = resolveTransition(vnode.data.transition);
-  if (isUndef(data)) {
+  if (isUndef(data) || el.nodeType !== 1) {
     return rm()
   }
 
   /* istanbul ignore if */
-  if (isDef(el._leaveCb) || el.nodeType !== 1) {
+  if (isDef(el._leaveCb)) {
     return
   }
 
@@ -16194,7 +16407,7 @@ var Transition = {
   render: function render (h) {
     var this$1 = this;
 
-    var children = this.$options._renderChildren;
+    var children = this.$slots.default;
     if (!children) {
       return
     }
@@ -16272,7 +16485,9 @@ var Transition = {
       oldChild &&
       oldChild.data &&
       !isSameChild(child, oldChild) &&
-      !isAsyncPlaceholder(oldChild)
+      !isAsyncPlaceholder(oldChild) &&
+      // #6687 component root is a comment node
+      !(oldChild.componentInstance && oldChild.componentInstance._vnode.isComment)
     ) {
       // replace old child transition data with fresh one
       // important for dynamic transitions!
@@ -17907,16 +18122,7 @@ function genHandlers (
 ) {
   var res = isNative ? 'nativeOn:{' : 'on:{';
   for (var name in events) {
-    var handler = events[name];
-    // #5330: warn click.right, since right clicks do not actually fire click events.
-    if (false
-    ) {
-      warn(
-        "Use \"contextmenu\" instead of \"click.right\" since right clicks " +
-        "do not actually fire \"click\" events."
-      );
-    }
-    res += "\"" + name + "\":" + (genHandler(name, handler)) + ",";
+    res += "\"" + name + "\":" + (genHandler(name, events[name])) + ",";
   }
   return res.slice(0, -1) + '}'
 }
@@ -18083,10 +18289,10 @@ function genElement (el, state) {
 }
 
 // hoist static sub-trees out
-function genStatic (el, state) {
+function genStatic (el, state, once$$1) {
   el.staticProcessed = true;
   state.staticRenderFns.push(("with(this){return " + (genElement(el, state)) + "}"));
-  return ("_m(" + (state.staticRenderFns.length - 1) + (el.staticInFor ? ',true' : '') + ")")
+  return ("_m(" + (state.staticRenderFns.length - 1) + "," + (el.staticInFor ? 'true' : 'false') + "," + (once$$1 ? 'true' : 'false') + ")")
 }
 
 // v-once
@@ -18112,7 +18318,7 @@ function genOnce (el, state) {
     }
     return ("_o(" + (genElement(el, state)) + "," + (state.onceId++) + "," + key + ")")
   } else {
-    return genStatic(el, state)
+    return genStatic(el, state, true)
   }
 }
 
@@ -18984,6 +19190,12 @@ module.exports = class virwox extends Exchange {
                 'www': 'https://www.virwox.com',
                 'doc': 'https://www.virwox.com/developers.php',
             },
+            'requiredCredentials': {
+                'apiKey': true,
+                'secret': false,
+                'login': true,
+                'password': true
+            },
             'api': {
                 'public': {
                     'get': [
@@ -19170,6 +19382,7 @@ module.exports = class virwox extends Exchange {
         let url = this.urls['api'][api];
         let auth = {};
         if (api == 'private') {
+            this.checkRequiredCredentials ();
             auth['key'] = this.apiKey;
             auth['user'] = this.login;
             auth['pass'] = this.password;
@@ -19195,6 +19408,316 @@ module.exports = class virwox extends Exchange {
         let response = await this.fetch2 (path, api, method, params, headers, body);
         if ('error' in response)
             if (response['error'])
+                throw new ExchangeError (this.id + ' ' + this.json (response));
+        return response;
+    }
+}
+
+
+/***/ }),
+
+/***/ "8XlC":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+//  ---------------------------------------------------------------------------
+
+const Exchange = __webpack_require__ ("PJ5r")
+const { ExchangeError } = __webpack_require__ ("AnAA")
+
+//  ---------------------------------------------------------------------------
+
+module.exports = class zb extends Exchange {
+
+    describe () {
+        return this.deepExtend (super.describe (), {
+            'id': 'zb',
+            'name': 'ZB',
+            'countries': 'CN',
+            'rateLimit': 1000,
+            'version': 'v1',
+            'hasCORS': false,
+            'hasFetchOrder': true,
+            'urls': {
+                'logo': 'https://user-images.githubusercontent.com/1294454/32859187-cd5214f0-ca5e-11e7-967d-96568e2e2bd1.jpg',
+                'api': {
+                    'public': 'http://api.zb.com/data', // no https for public API
+                    'private': 'https://trade.zb.com/api',
+                },
+                'www': 'https://trade.zb.com/api',
+                'doc': 'https://www.zb.com/i/developer',
+            },
+            'api': {
+                'public': {
+                    'get': [
+                        'markets',
+                        'ticker',
+                        'depth',
+                        'trades',
+                        'kline',
+                    ],
+                },
+                'private': {
+                    'post': [
+                        'order',
+                        'cancelOrder',
+                        'getOrder',
+                        'getOrders',
+                        'getOrdersNew',
+                        'getOrdersIgnoreTradeType',
+                        'getUnfinishedOrdersIgnoreTradeType',
+                        'getAccountInfo',
+                        'getUserAddress',
+                        'getWithdrawAddress',
+                        'getWithdrawRecord',
+                        'getChargeRecord',
+                        'getCnyWithdrawRecord',
+                        'getCnyChargeRecord',
+                        'withdraw',
+                    ],
+                },
+            },
+        });
+    }
+
+    getTradingFeeFromBaseQuote (base, quote) {
+        // base: quote
+        let fees = {
+            'BTC': { 'USDT': 0.0 },
+            'BCH': { 'BTC': 0.001, 'USDT': 0.001 },
+            'LTC': { 'BTC': 0.001, 'USDT': 0.0 },
+            'ETH': { 'BTC': 0.001, 'USDT': 0.0 },
+            'ETC': { 'BTC': 0.001, 'USDT': 0.0 },
+            'BTS': { 'BTC': 0.001, 'USDT': 0.001 },
+            'EOS': { 'BTC': 0.001, 'USDT': 0.001 },
+            'HSR': { 'BTC': 0.001, 'USDT': 0.001 },
+            'QTUM': { 'BTC': 0.001, 'USDT': 0.001 },
+            'USDT': { 'BTC': 0.0 },
+        };
+        if (base in fees) {
+            let quoteFees = fees[base];
+            if (quote in quoteFees)
+                return quoteFees[quote];
+        }
+        return undefined;
+    }
+
+    async fetchMarkets () {
+        let markets = await this.publicGetMarkets ();
+        let keys = Object.keys (markets);
+        let result = [];
+        for (let i = 0; i < keys.length; i++) {
+            let id = keys[i];
+            let market = markets[id];
+            let [ baseId, quoteId ] = id.split ('_');
+            let base = this.commonCurrencyCode (baseId.toUpperCase ());
+            let quote = this.commonCurrencyCode (quoteId.toUpperCase ());
+            let symbol = base + '/' + quote;
+            let fee = this.getTradingFeeFromBaseQuote (base, quote);
+            let precision = {
+                'amount': market['amountScale'],
+                'price': market['priceScale'],
+            };
+            let lot = Math.pow (10, -precision['amount']);
+            result.push ({
+                'id': id,
+                'symbol': symbol,
+                'baseId': baseId,
+                'quoteId': quoteId,
+                'base': base,
+                'quote': quote,
+                'info': market,
+                'maker': fee,
+                'taker': fee,
+                'lot': lot,
+                'active': true,
+                'precision': precision,
+                'limits': {
+                    'amount': {
+                        'min': lot,
+                        'max': undefined,
+                    },
+                    'price': {
+                        'min': Math.pow (10, -precision['price']),
+                        'max': undefined,
+                    },
+                    'cost': {
+                        'min': 0,
+                        'max': undefined,
+                    },
+                },
+            });
+        }
+        return result;
+    }
+
+    async fetchBalance (params = {}) {
+        await this.loadMarkets ();
+        let response = await this.privatePostGetAccountInfo ();
+        let balances = response['result'];
+        let result = { 'info': balances };
+        for (let c = 0; c < this.currencies.length; c++) {
+            let currency = this.currencies[c];
+            let account = this.account ();
+            if (currency in balances['balance'])
+                account['free'] = parseFloat (balances['balance'][currency]['amount']);
+            if (currency in balances['frozen'])
+                account['used'] = parseFloat (balances['frozen'][currency]['amount']);
+            account['total'] = this.sum (account['free'], account['used']);
+            result[currency] = account;
+        }
+        return this.parseBalance (result);
+    }
+
+    getMarketFieldName () {
+        return 'market';
+    }
+
+    async fetchOrderBook (symbol, params = {}) {
+        await this.loadMarkets ();
+        let market = this.market (symbol);
+        let marketFieldName = this.getMarketFieldName ();
+        let request = {};
+        request[marketFieldName] = market['id'];
+        let orderbook = await this.publicGetDepth (this.extend (request, params));
+        let timestamp = this.milliseconds ();
+        let bids = undefined;
+        let asks = undefined;
+        if ('bids' in orderbook)
+            bids = orderbook['bids'];
+        if ('asks' in orderbook)
+            asks = orderbook['asks'];
+        let result = {
+            'bids': bids,
+            'asks': asks,
+            'timestamp': timestamp,
+            'datetime': this.iso8601 (timestamp),
+        };
+        if (result['bids'])
+            result['bids'] = this.sortBy (result['bids'], 0, true);
+        if (result['asks'])
+            result['asks'] = this.sortBy (result['asks'], 0);
+        return result;
+    }
+
+    async fetchTicker (symbol, params = {}) {
+        await this.loadMarkets ();
+        let market = this.market (symbol);
+        let marketFieldName = this.getMarketFieldName ();
+        let request = {};
+        request[marketFieldName] = market['id'];
+        let response = await this.publicGetTicker (this.extend (request, params));
+        let ticker = response['ticker'];
+        let timestamp = this.milliseconds ();
+        return {
+            'symbol': symbol,
+            'timestamp': timestamp,
+            'datetime': this.iso8601 (timestamp),
+            'high': parseFloat (ticker['high']),
+            'low': parseFloat (ticker['low']),
+            'bid': parseFloat (ticker['buy']),
+            'ask': parseFloat (ticker['sell']),
+            'vwap': undefined,
+            'open': undefined,
+            'close': undefined,
+            'first': undefined,
+            'last': parseFloat (ticker['last']),
+            'change': undefined,
+            'percentage': undefined,
+            'average': undefined,
+            'baseVolume': parseFloat (ticker['vol']),
+            'quoteVolume': undefined,
+            'info': ticker,
+        };
+    }
+
+    parseTrade (trade, market = undefined) {
+        let timestamp = trade['date'] * 1000;
+        let side = (trade['trade_type'] == 'bid') ? 'buy' : 'sell';
+        return {
+            'info': trade,
+            'id': trade['tid'].toString (),
+            'timestamp': timestamp,
+            'datetime': this.iso8601 (timestamp),
+            'symbol': market['symbol'],
+            'type': undefined,
+            'side': side,
+            'price': trade['price'],
+            'amount': trade['amount'],
+        };
+    }
+
+    async fetchTrades (symbol, since = undefined, limit = undefined, params = {}) {
+        await this.loadMarkets ();
+        let market = this.market (symbol);
+        let marketFieldName = this.getMarketFieldName ();
+        let request = {};
+        request[marketFieldName] = market['id'];
+        let response = await this.publicGetTrades (this.extend (request, params));
+        return this.parseTrades (response, market);
+    }
+
+    async createOrder (symbol, type, side, amount, price = undefined, params = {}) {
+        await this.loadMarkets ();
+        let paramString = '&price=' + price.toString ();
+        paramString += '&amount=' + amount.toString ();
+        let tradeType = (side == 'buy') ? '1' : '0';
+        paramString += '&tradeType=' + tradeType;
+        paramString += '&currency=' + this.marketId (symbol);
+        let response = await this.privatePostOrder (paramString);
+        return {
+            'info': response,
+            'id': response['id'],
+        };
+    }
+
+    async cancelOrder (id, symbol = undefined, params = {}) {
+        await this.loadMarkets ();
+        let paramString = '&id=' + id.toString ();
+        if ('currency' in params)
+            paramString += '&currency=' + params['currency'];
+        return await this.privatePostCancelOrder (paramString);
+    }
+
+    async fetchOrder (id, symbol = undefined, params = {}) {
+        await this.loadMarkets ();
+        let paramString = '&id=' + id.toString ();
+        if ('currency' in params)
+            paramString += '&currency=' + params['currency'];
+        return await this.privatePostGetOrder (paramString);
+    }
+
+    nonce () {
+        return this.milliseconds ();
+    }
+
+    sign (path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined) {
+        let url = this.urls['api'][api];
+        if (api == 'public') {
+            url += '/' + this.version + '/' + path;
+            if (Object.keys (params).length)
+                url += '?' + this.urlencode (params);
+        } else {
+            this.checkRequiredCredentials ();
+            let paramsLength = params.length; // params should be a string here
+            let nonce = this.nonce ();
+            let auth = 'method=' + path;
+            auth += '&accesskey=' + this.apiKey;
+            auth += paramsLength ? params : '';
+            let secret = this.hash (this.encode (this.secret), 'sha1');
+            let signature = this.hmac (this.encode (auth), this.encode (secret), 'md5');
+            let suffix = 'sign=' + signature + '&reqTime=' + nonce.toString ();
+            url += '/' + path + '?' + auth + '&' + suffix;
+        }
+        return { 'url': url, 'method': method, 'body': body, 'headers': headers };
+    }
+
+    async request (path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined) {
+        let response = await this.fetch2 (path, api, method, params, headers, body);
+        if (api == 'private')
+            if ('code' in response)
                 throw new ExchangeError (this.id + ' ' + this.json (response));
         return response;
     }
@@ -19231,6 +19754,11 @@ module.exports = class flowbtc extends Exchange {
                 'api': 'https://api.flowbtc.com:8400/ajax',
                 'www': 'https://trader.flowbtc.com',
                 'doc': 'http://www.flowbtc.com.br/api/',
+            },
+            'requiredCredentials': {
+                'apiKey': true,
+                'secret': true,
+                'uid': true,
             },
             'api': {
                 'public': {
@@ -19403,8 +19931,7 @@ module.exports = class flowbtc extends Exchange {
                 body = this.json (params);
             }
         } else {
-            if (!this.uid)
-                throw new AuthenticationError (this.id + ' requires `' + this.id + '.uid` property for authentication');
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             let auth = nonce.toString () + this.uid + this.apiKey;
             let signature = this.hmac (this.encode (auth), this.encode (this.secret));
@@ -19664,6 +20191,15 @@ class OrderNotCached extends InvalidOrder {
     }
 }
 
+class CancelPending extends InvalidOrder {
+    constructor (message) {
+        super (message)
+        this.constructor = CancelPending
+        this.__proto__   = CancelPending.prototype
+        this.message     = message
+    }
+}
+
 class NetworkError extends BaseError {
     constructor (message) {
         super (message)
@@ -19711,6 +20247,7 @@ module.exports = {
     InvalidOrder,
     OrderNotFound,
     OrderNotCached,
+    CancelPending,
     NetworkError,
     DDoSProtection,
     RequestTimeout,
@@ -19838,17 +20375,17 @@ module.exports = class btcmarkets extends Exchange {
                 },
             },
             'markets': {
-                'BTC/AUD': { 'id': 'BTC/AUD', 'symbol': 'BTC/AUD', 'base': 'BTC', 'quote': 'AUD' },
-                'LTC/AUD': { 'id': 'LTC/AUD', 'symbol': 'LTC/AUD', 'base': 'LTC', 'quote': 'AUD' },
-                'ETH/AUD': { 'id': 'ETH/AUD', 'symbol': 'ETH/AUD', 'base': 'ETH', 'quote': 'AUD' },
-                'ETC/AUD': { 'id': 'ETC/AUD', 'symbol': 'ETC/AUD', 'base': 'ETC', 'quote': 'AUD' },
-                'XRP/AUD': { 'id': 'XRP/AUD', 'symbol': 'XRP/AUD', 'base': 'XRP', 'quote': 'AUD' },
-                'BCH/AUD': { 'id': 'BCH/AUD', 'symbol': 'BCH/AUD', 'base': 'BCH', 'quote': 'AUD' },
-                'LTC/BTC': { 'id': 'LTC/BTC', 'symbol': 'LTC/BTC', 'base': 'LTC', 'quote': 'BTC' },
-                'ETH/BTC': { 'id': 'ETH/BTC', 'symbol': 'ETH/BTC', 'base': 'ETH', 'quote': 'BTC' },
-                'ETC/BTC': { 'id': 'ETC/BTC', 'symbol': 'ETC/BTC', 'base': 'ETC', 'quote': 'BTC' },
-                'XRP/BTC': { 'id': 'XRP/BTC', 'symbol': 'XRP/BTC', 'base': 'XRP', 'quote': 'BTC' },
-                'BCH/BTC': { 'id': 'BCH/BTC', 'symbol': 'BCH/BTC', 'base': 'BCH', 'quote': 'BTC' },
+                'BTC/AUD': { 'id': 'BTC/AUD', 'symbol': 'BTC/AUD', 'base': 'BTC', 'quote': 'AUD', 'maker': 0.0085, 'taker': 0.0085 },
+                'LTC/AUD': { 'id': 'LTC/AUD', 'symbol': 'LTC/AUD', 'base': 'LTC', 'quote': 'AUD', 'maker': 0.0085, 'taker': 0.0085 },
+                'ETH/AUD': { 'id': 'ETH/AUD', 'symbol': 'ETH/AUD', 'base': 'ETH', 'quote': 'AUD', 'maker': 0.0085, 'taker': 0.0085 },
+                'ETC/AUD': { 'id': 'ETC/AUD', 'symbol': 'ETC/AUD', 'base': 'ETC', 'quote': 'AUD', 'maker': 0.0085, 'taker': 0.0085 },
+                'XRP/AUD': { 'id': 'XRP/AUD', 'symbol': 'XRP/AUD', 'base': 'XRP', 'quote': 'AUD', 'maker': 0.0085, 'taker': 0.0085 },
+                'BCH/AUD': { 'id': 'BCH/AUD', 'symbol': 'BCH/AUD', 'base': 'BCH', 'quote': 'AUD', 'maker': 0.0085, 'taker': 0.0085 },
+                'LTC/BTC': { 'id': 'LTC/BTC', 'symbol': 'LTC/BTC', 'base': 'LTC', 'quote': 'BTC', 'maker': 0.0022, 'taker': 0.0022 },
+                'ETH/BTC': { 'id': 'ETH/BTC', 'symbol': 'ETH/BTC', 'base': 'ETH', 'quote': 'BTC', 'maker': 0.0022, 'taker': 0.0022 },
+                'ETC/BTC': { 'id': 'ETC/BTC', 'symbol': 'ETC/BTC', 'base': 'ETC', 'quote': 'BTC', 'maker': 0.0022, 'taker': 0.0022 },
+                'XRP/BTC': { 'id': 'XRP/BTC', 'symbol': 'XRP/BTC', 'base': 'XRP', 'quote': 'BTC', 'maker': 0.0022, 'taker': 0.0022 },
+                'BCH/BTC': { 'id': 'BCH/BTC', 'symbol': 'BCH/BTC', 'base': 'BCH', 'quote': 'BTC', 'maker': 0.0022, 'taker': 0.0022 },
             },
         });
     }
@@ -19989,6 +20526,7 @@ module.exports = class btcmarkets extends Exchange {
             if (Object.keys (params).length)
                 url += '?' + this.urlencode (params);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             let auth = uri + "\n" + nonce + "\n";
             headers = {
@@ -20184,6 +20722,7 @@ module.exports = class btcx extends Exchange {
         if (api == 'public') {
             url += this.implodeParams (path, params);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             url += api;
             body = this.urlencode (this.extend ({
@@ -20365,13 +20904,15 @@ module.exports = class bittrex extends Exchange {
                 'amount': amountLimits,
                 'price': priceLimits,
             };
+            let active = market['IsActive'];
             result.push (this.extend (this.fees['trading'], {
                 'id': id,
                 'symbol': symbol,
                 'base': base,
                 'quote': quote,
+                'active': active,
                 'info': market,
-                'lot': amountLimits['min'],
+                'lot': Math.pow (10, -precision['amount']),
                 'precision': precision,
                 'limits': limits,
             }));
@@ -20447,26 +20988,29 @@ module.exports = class bittrex extends Exchange {
         for (let i = 0; c < currencies.length; i++) {
             let currency = currencies[i];
             let id = currency['Currency'];
+            let precision = {
+                'amount': 8, // default precision, todo: fix "magic constants"
+                'price': 8,
+            };
             // todo: will need to rethink the fees
             // to add support for multiple withdrawal/deposit methods and
             // differentiated fees for each particular method
             result.push ({
                 'id': id,
+                'info': currency,
+                'name': currency['CurrencyLong'],
                 'code': this.commonCurrencyCode (id),
                 'active': currency['IsActive'],
                 'fees': currency['TxFee'], // todo: redesign
-                'precision': {
-                    'amount': 8, // default precision, todo: fix "magic constants"
-                    'price': 8,
-                },
+                'precision': precision,
                 'limits': {
                     'amount': {
-                        'min': undefined,
-                        'max': undefined,
+                        'min': Math.pow (10, -precision['amount']),
+                        'max': Math.pow (10, precision['amount']),
                     },
                     'price': {
-                        'min': undefined,
-                        'max': undefined,
+                        'min': Math.pow (10, -precision['price']),
+                        'max': Math.pow (10, precision['price']),
                     },
                     'cost': {
                         'min': undefined,
@@ -20760,6 +21304,7 @@ module.exports = class bittrex extends Exchange {
             if (Object.keys (params).length)
                 url += '?' + this.urlencode (params);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             url += api + '/';
             if (((api == 'account') && (path != 'withdraw')) || (path == 'openorders'))
@@ -21650,8 +22195,8 @@ module.exports = class coincheck extends Exchange {
             'change': undefined,
             'percentage': undefined,
             'average': undefined,
-            'baseVolume': undefined,
-            'quoteVolume': parseFloat (ticker['volume']),
+            'baseVolume': parseFloat (ticker['volume']),
+            'quoteVolume': undefined,
             'info': ticker,
         };
     }
@@ -21712,6 +22257,7 @@ module.exports = class coincheck extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             if (Object.keys (query).length)
                 body = this.urlencode (this.keysort (query));
@@ -21736,6 +22282,7 @@ module.exports = class coincheck extends Exchange {
         throw new ExchangeError (this.id + ' ' + this.json (response));
     }
 }
+
 
 /***/ }),
 
@@ -22097,6 +22644,7 @@ module.exports = class anxpro extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             body = this.urlencode (this.extend ({ 'nonce': nonce }, query));
             let secret = this.base64ToBinary (this.secret);
@@ -22322,6 +22870,7 @@ module.exports = class mercado extends Exchange {
         if (api == 'public') {
             url += this.implodeParams (path, params);
         } else {
+            this.checkRequiredCredentials ();
             url += this.version + '/';
             let nonce = this.nonce ();
             body = this.urlencode (this.extend ({
@@ -22459,6 +23008,25 @@ module.exports = class zaif extends Exchange {
                         'getInvoice',
                         'getInvoiceIdsByOrderNumber',
                         'cancelInvoice',
+                    ],
+                },
+                'tlapi': {
+                    'post': [
+                        'get_positions',
+                        'position_history',
+                        'active_positions',
+                        'create_position',
+                        'change_position',
+                        'cancel_position',
+                    ],
+                },
+                'fapi': {
+                    'get': [
+                        'groups/{group_id}',
+                        'last_price/{group_id}/{pair}',
+                        'ticker/{group_id}/{pair}',
+                        'trades/{group_id}/{pair}',
+                        'depth/{group_id}/{pair}',
                     ],
                 },
             },
@@ -22695,8 +23263,17 @@ module.exports = class zaif extends Exchange {
         let url = this.urls['api'] + '/';
         if (api == 'public') {
             url += 'api/' + this.version + '/' + this.implodeParams (path, params);
+        } else if (api == 'fapi') {
+            url += 'fapi/' + this.version + '/' + this.implodeParams (path, params);
         } else {
-            url += (api == 'ecapi') ? 'ecapi' : 'tapi';
+            this.checkRequiredCredentials ();
+            if (api == 'ecapi') {
+                url += 'ecapi';
+            } else if (api == 'tlapi') {
+                url += 'tlapi';
+            } else {
+                url += 'tapi';
+            }
             let nonce = this.nonce ();
             body = this.urlencode (this.extend ({
                 'method': path,
@@ -23323,6 +23900,17 @@ if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
 
 /***/ }),
 
+/***/ "G5/o":
+/***/ (function(module, exports, __webpack_require__) {
+
+// 19.1.2.7 Object.getOwnPropertyNames(O)
+__webpack_require__("uqUo")('getOwnPropertyNames', function () {
+  return __webpack_require__("Rrel").f;
+});
+
+
+/***/ }),
+
 /***/ "GJCK":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -23332,7 +23920,7 @@ if (typeof __e == 'number') __e = core; // eslint-disable-line no-undef
 //  ---------------------------------------------------------------------------
 
 const Exchange = __webpack_require__ ("PJ5r")
-const { ExchangeError, InsufficientFunds, NotSupported } = __webpack_require__ ("AnAA")
+const { ExchangeError, InsufficientFunds, NotSupported, InvalidOrder } = __webpack_require__ ("AnAA")
 
 //  ---------------------------------------------------------------------------
 
@@ -23478,6 +24066,7 @@ module.exports = class bitfinex extends Exchange {
             let symbol = base + '/' + quote;
             let precision = {
                 'price': market['price_precision'],
+                'amount': market['price_precision'],
             };
             result.push ({
                 'id': id,
@@ -23488,6 +24077,20 @@ module.exports = class bitfinex extends Exchange {
                 'quoteId': quoteId,
                 'info': market,
                 'precision': precision,
+                'limits': {
+                    'amount': {
+                        'min': parseFloat (market['minimum_order_size']),
+                        'max': parseFloat (market['maximum_order_size']),
+                    },
+                    'price': {
+                        'min': Math.pow (10, -precision['price']),
+                        'max': Math.pow (10, precision['price']),
+                    },
+                    'cost': {
+                        'min': undefined,
+                        'max': undefined,
+                    },
+                },
             });
         }
         return result;
@@ -23495,11 +24098,12 @@ module.exports = class bitfinex extends Exchange {
 
     async fetchBalance (params = {}) {
         await this.loadMarkets ();
+        let balanceType = this.safeString (params, 'type', 'exchange');
         let balances = await this.privatePostBalances ();
         let result = { 'info': balances };
         for (let i = 0; i < balances.length; i++) {
             let balance = balances[i];
-            if (balance['type'] == 'exchange') {
+            if (balance['type'] == balanceType) {
                 let currency = balance['currency'];
                 let uppercase = currency.toUpperCase ();
                 uppercase = this.commonCurrencyCode (uppercase);
@@ -23522,6 +24126,7 @@ module.exports = class bitfinex extends Exchange {
     }
 
     async fetchTickers (symbols = undefined, params = {}) {
+        await this.loadMarkets ();
         let tickers = await this.publicGetTickers (params);
         let result = {};
         for (let i = 0; i < tickers.length; i++) {
@@ -23588,7 +24193,8 @@ module.exports = class bitfinex extends Exchange {
     }
 
     parseTrade (trade, market) {
-        let timestamp = trade['timestamp'] * 1000;
+        let timestamp = parseInt (parseFloat (trade['timestamp'])) * 1000;
+        let side = trade['type'].toLowerCase ();
         return {
             'id': trade['tid'].toString (),
             'info': trade,
@@ -23596,7 +24202,7 @@ module.exports = class bitfinex extends Exchange {
             'datetime': this.iso8601 (timestamp),
             'symbol': market['symbol'],
             'type': undefined,
-            'side': trade['type'],
+            'side': side,
             'price': parseFloat (trade['price']),
             'amount': parseFloat (trade['amount']),
         };
@@ -23616,6 +24222,7 @@ module.exports = class bitfinex extends Exchange {
         let orderType = type;
         if ((type == 'limit') || (type == 'market'))
             orderType = 'exchange ' + type;
+        amount = this.amountToPrecision (symbol, amount);
         let order = {
             'symbol': this.marketId (symbol),
             'amount': amount.toString (),
@@ -23628,6 +24235,7 @@ module.exports = class bitfinex extends Exchange {
         if (type == 'market') {
             order['price'] = this.nonce ().toString ();
         } else {
+            price = this.priceToPrecision (symbol, price);
             order['price'] = price.toString ();
         }
         let result = await this.privatePostOrderNew (this.extend (order, params));
@@ -23696,9 +24304,10 @@ module.exports = class bitfinex extends Exchange {
 
     async fetchClosedOrders (symbol = undefined, since = undefined, limit = undefined, params = {}) {
         await this.loadMarkets ();
-        let response = await this.privatePostOrdersHist (this.extend ({
-            'limit': 100, // default 100
-        }, params));
+        let request = {};
+        if (limit)
+            request['limit'] = limit;
+        let response = await this.privatePostOrdersHist (this.extend (request, params));
         return this.parseOrders (response);
     }
 
@@ -23814,10 +24423,15 @@ module.exports = class bitfinex extends Exchange {
         }
         let query = this.omit (params, this.extractParams (path));
         let url = this.urls['api'] + request;
-        if (api == 'public') {
-            if (Object.keys (query).length)
-                url += '?' + this.urlencode (query);
-        } else {
+        if ((api == 'public') || (path.indexOf ('hist') >= 0)) {
+            if (Object.keys (query).length) {
+                let suffix = '?' + this.urlencode (query);
+                url += suffix;
+                request += suffix;
+            }
+        }
+        if (api == 'private') {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             query = this.extend ({
                 'nonce': nonce.toString (),
@@ -23835,6 +24449,21 @@ module.exports = class bitfinex extends Exchange {
             };
         }
         return { 'url': url, 'method': method, 'body': body, 'headers': headers };
+    }
+
+    handleErrors (code, reason, url, method, headers, body) {
+        if (code == 400) {
+            if (body[0] == "{") {
+                let response = JSON.parse (body);
+                let message = response['message'];
+                if (message.indexOf ('Key price should be a decimal number') >= 0) {
+                    throw new InvalidOrder (this.id + ' ' + message);
+                } else if (message.indexOf ('Invalid order') >= 0) {
+                    throw new InvalidOrder (this.id + ' ' + message);
+                }
+            }
+            throw new ExchangeError (this.id + ' ' + body);
+        }
     }
 
     async request (path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined) {
@@ -23883,6 +24512,11 @@ module.exports = class cex extends Exchange {
                 'api': 'https://cex.io/api',
                 'www': 'https://cex.io',
                 'doc': 'https://cex.io/cex-api',
+            },
+            'requiredCredentials': {
+                'apiKey': true,
+                'secret': true,
+                'uid': true,
             },
             'api': {
                 'public': {
@@ -24021,7 +24655,7 @@ module.exports = class cex extends Exchange {
         };
         let response = await this.publicGetOhlcvHdYyyymmddPair (this.extend (request, params));
         let key = 'data' + this.timeframes[timeframe];
-        let ohlcvs = this.unjson (response[key]);
+        let ohlcvs = JSON.parse (response[key]);
         return this.parseOHLCVs (ohlcvs, market, timeframe, since, limit);
     }
 
@@ -24240,8 +24874,7 @@ module.exports = class cex extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
-            if (!this.uid)
-                throw new AuthenticationError (this.id + ' requires `' + this.id + '.uid` property for authentication');
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             let auth = nonce + this.uid + this.apiKey;
             let signature = this.hmac (this.encode (auth), this.encode (this.secret));
@@ -24453,6 +25086,7 @@ module.exports = class cryptopia extends Exchange {
                 'amount': amountLimits,
                 'price': priceLimits,
             };
+            let active = market['Status'] == 'OK';
             result.push ({
                 'id': id,
                 'symbol': symbol,
@@ -24462,6 +25096,7 @@ module.exports = class cryptopia extends Exchange {
                 'maker': market['TradeFee'] / 100,
                 'taker': market['TradeFee'] / 100,
                 'lot': amountLimits['min'],
+                'active': active,
                 'precision': precision,
                 'limits': limits,
             });
@@ -24828,6 +25463,7 @@ module.exports = class cryptopia extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             body = this.json (query);
             let hash = this.hash (this.encode (body), 'md5', 'base64');
@@ -25022,12 +25658,12 @@ module.exports = class mixcoins extends Exchange {
                 },
             },
             'markets': {
-                'BTC/USD': { 'id': 'btc_usd', 'symbol': 'BTC/USD', 'base': 'BTC', 'quote': 'USD' },
-                'ETH/BTC': { 'id': 'eth_btc', 'symbol': 'ETH/BTC', 'base': 'ETH', 'quote': 'BTC' },
-                'BCH/BTC': { 'id': 'bcc_btc', 'symbol': 'BCH/BTC', 'base': 'BCH', 'quote': 'BTC' },
-                'LSK/BTC': { 'id': 'lsk_btc', 'symbol': 'LSK/BTC', 'base': 'LSK', 'quote': 'BTC' },
-                'BCH/USD': { 'id': 'bcc_usd', 'symbol': 'BCH/USD', 'base': 'BCH', 'quote': 'USD' },
-                'ETH/USD': { 'id': 'eth_usd', 'symbol': 'ETH/USD', 'base': 'ETH', 'quote': 'USD' },
+                'BTC/USD': { 'id': 'btc_usd', 'symbol': 'BTC/USD', 'base': 'BTC', 'quote': 'USD', 'maker': 0.0015, 'taker': 0.0025 },
+                'ETH/BTC': { 'id': 'eth_btc', 'symbol': 'ETH/BTC', 'base': 'ETH', 'quote': 'BTC', 'maker': 0.001, 'taker': 0.0015 },
+                'BCH/BTC': { 'id': 'bcc_btc', 'symbol': 'BCH/BTC', 'base': 'BCH', 'quote': 'BTC', 'maker': 0.001, 'taker': 0.0015 },
+                'LSK/BTC': { 'id': 'lsk_btc', 'symbol': 'LSK/BTC', 'base': 'LSK', 'quote': 'BTC', 'maker': 0.0015, 'taker': 0.0025 },
+                'BCH/USD': { 'id': 'bcc_usd', 'symbol': 'BCH/USD', 'base': 'BCH', 'quote': 'USD', 'maker': 0.001, 'taker': 0.0015 },
+                'ETH/USD': { 'id': 'eth_usd', 'symbol': 'ETH/USD', 'base': 'ETH', 'quote': 'USD', 'maker': 0.001, 'taker': 0.0015 },
             },
         });
     }
@@ -25137,6 +25773,7 @@ module.exports = class mixcoins extends Exchange {
             if (Object.keys (params).length)
                 url += '?' + this.urlencode (params);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             body = this.urlencode (this.extend ({
                 'nonce': nonce,
@@ -25344,6 +25981,12 @@ module.exports = class gatecoin extends Exchange {
                     ],
                 },
             },
+            'fees': {
+                'trading': {
+                    'maker': 0.0025,
+                    'taker': 0.0035,
+                },
+            },
         });
     }
 
@@ -25403,6 +26046,9 @@ module.exports = class gatecoin extends Exchange {
         let symbol = undefined;
         if (market)
             symbol = market['symbol'];
+        let baseVolume = parseFloat (ticker['volume']);
+        let vwap = parseFloat (ticker['vwap']);
+        let quoteVolume = baseVolume * vwap;
         return {
             'symbol': symbol,
             'timestamp': timestamp,
@@ -25411,7 +26057,7 @@ module.exports = class gatecoin extends Exchange {
             'low': parseFloat (ticker['low']),
             'bid': parseFloat (ticker['bid']),
             'ask': parseFloat (ticker['ask']),
-            'vwap': parseFloat (ticker['vwap']),
+            'vwap': vwap,
             'open': parseFloat (ticker['open']),
             'close': undefined,
             'first': undefined,
@@ -25419,8 +26065,8 @@ module.exports = class gatecoin extends Exchange {
             'change': undefined,
             'percentage': undefined,
             'average': undefined,
-            'baseVolume': undefined,
-            'quoteVolume': parseFloat (ticker['volume']),
+            'baseVolume': baseVolume,
+            'quoteVolume': quoteVolume,
             'info': ticker,
         };
     }
@@ -25543,6 +26189,7 @@ module.exports = class gatecoin extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             let contentType = (method == 'GET') ? '' : 'application/json';
             let auth = method + url + contentType + nonce.toString ();
@@ -25570,6 +26217,7 @@ module.exports = class gatecoin extends Exchange {
         throw new ExchangeError (this.id + ' ' + this.json (response));
     }
 }
+
 
 /***/ }),
 
@@ -25725,6 +26373,7 @@ module.exports = class coinspot extends Exchange {
             throw new AuthenticationError (this.id + ' requires apiKey for all requests');
         let url = this.urls['api'][api] + '/' + path;
         if (api == 'private') {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             body = this.json (this.extend ({ 'nonce': nonce }, params));
             headers = {
@@ -25822,6 +26471,8 @@ module.exports = class independentreserve extends Exchange {
                 let quote = this.commonCurrencyCode (quoteIdUppercase);
                 let id = baseId + '/' + quoteId;
                 let symbol = base + '/' + quote;
+                let taker = 0.5 / 100;
+                let maker = 0.5 / 100;
                 result.push ({
                     'id': id,
                     'symbol': symbol,
@@ -25829,6 +26480,8 @@ module.exports = class independentreserve extends Exchange {
                     'quote': quote,
                     'baseId': baseId,
                     'quoteId': quoteId,
+                    'taker': taker,
+                    'maker': maker,
                     'info': id,
                 });
             }
@@ -25962,6 +26615,7 @@ module.exports = class independentreserve extends Exchange {
             if (Object.keys (params).length)
                 url += '?' + this.urlencode (params);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             let auth = [
                 url,
@@ -26210,6 +26864,951 @@ exports.RETURN = RETURN;
 
 /***/ }),
 
+/***/ "NYxO":
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* unused harmony export Store */
+/* unused harmony export install */
+/* unused harmony export mapState */
+/* unused harmony export mapMutations */
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return mapGetters; });
+/* unused harmony export mapActions */
+/* unused harmony export createNamespacedHelpers */
+/**
+ * vuex v3.0.1
+ * (c) 2017 Evan You
+ * @license MIT
+ */
+var applyMixin = function (Vue) {
+  var version = Number(Vue.version.split('.')[0]);
+
+  if (version >= 2) {
+    Vue.mixin({ beforeCreate: vuexInit });
+  } else {
+    // override init and inject vuex init procedure
+    // for 1.x backwards compatibility.
+    var _init = Vue.prototype._init;
+    Vue.prototype._init = function (options) {
+      if ( options === void 0 ) options = {};
+
+      options.init = options.init
+        ? [vuexInit].concat(options.init)
+        : vuexInit;
+      _init.call(this, options);
+    };
+  }
+
+  /**
+   * Vuex init hook, injected into each instances init hooks list.
+   */
+
+  function vuexInit () {
+    var options = this.$options;
+    // store injection
+    if (options.store) {
+      this.$store = typeof options.store === 'function'
+        ? options.store()
+        : options.store;
+    } else if (options.parent && options.parent.$store) {
+      this.$store = options.parent.$store;
+    }
+  }
+};
+
+var devtoolHook =
+  typeof window !== 'undefined' &&
+  window.__VUE_DEVTOOLS_GLOBAL_HOOK__;
+
+function devtoolPlugin (store) {
+  if (!devtoolHook) { return }
+
+  store._devtoolHook = devtoolHook;
+
+  devtoolHook.emit('vuex:init', store);
+
+  devtoolHook.on('vuex:travel-to-state', function (targetState) {
+    store.replaceState(targetState);
+  });
+
+  store.subscribe(function (mutation, state) {
+    devtoolHook.emit('vuex:mutation', mutation, state);
+  });
+}
+
+/**
+ * Get the first item that pass the test
+ * by second argument function
+ *
+ * @param {Array} list
+ * @param {Function} f
+ * @return {*}
+ */
+/**
+ * Deep copy the given object considering circular structure.
+ * This function caches all nested objects and its copies.
+ * If it detects circular structure, use cached copy to avoid infinite loop.
+ *
+ * @param {*} obj
+ * @param {Array<Object>} cache
+ * @return {*}
+ */
+
+
+/**
+ * forEach for object
+ */
+function forEachValue (obj, fn) {
+  Object.keys(obj).forEach(function (key) { return fn(obj[key], key); });
+}
+
+function isObject (obj) {
+  return obj !== null && typeof obj === 'object'
+}
+
+function isPromise (val) {
+  return val && typeof val.then === 'function'
+}
+
+function assert (condition, msg) {
+  if (!condition) { throw new Error(("[vuex] " + msg)) }
+}
+
+var Module = function Module (rawModule, runtime) {
+  this.runtime = runtime;
+  this._children = Object.create(null);
+  this._rawModule = rawModule;
+  var rawState = rawModule.state;
+  this.state = (typeof rawState === 'function' ? rawState() : rawState) || {};
+};
+
+var prototypeAccessors$1 = { namespaced: { configurable: true } };
+
+prototypeAccessors$1.namespaced.get = function () {
+  return !!this._rawModule.namespaced
+};
+
+Module.prototype.addChild = function addChild (key, module) {
+  this._children[key] = module;
+};
+
+Module.prototype.removeChild = function removeChild (key) {
+  delete this._children[key];
+};
+
+Module.prototype.getChild = function getChild (key) {
+  return this._children[key]
+};
+
+Module.prototype.update = function update (rawModule) {
+  this._rawModule.namespaced = rawModule.namespaced;
+  if (rawModule.actions) {
+    this._rawModule.actions = rawModule.actions;
+  }
+  if (rawModule.mutations) {
+    this._rawModule.mutations = rawModule.mutations;
+  }
+  if (rawModule.getters) {
+    this._rawModule.getters = rawModule.getters;
+  }
+};
+
+Module.prototype.forEachChild = function forEachChild (fn) {
+  forEachValue(this._children, fn);
+};
+
+Module.prototype.forEachGetter = function forEachGetter (fn) {
+  if (this._rawModule.getters) {
+    forEachValue(this._rawModule.getters, fn);
+  }
+};
+
+Module.prototype.forEachAction = function forEachAction (fn) {
+  if (this._rawModule.actions) {
+    forEachValue(this._rawModule.actions, fn);
+  }
+};
+
+Module.prototype.forEachMutation = function forEachMutation (fn) {
+  if (this._rawModule.mutations) {
+    forEachValue(this._rawModule.mutations, fn);
+  }
+};
+
+Object.defineProperties( Module.prototype, prototypeAccessors$1 );
+
+var ModuleCollection = function ModuleCollection (rawRootModule) {
+  // register root module (Vuex.Store options)
+  this.register([], rawRootModule, false);
+};
+
+ModuleCollection.prototype.get = function get (path) {
+  return path.reduce(function (module, key) {
+    return module.getChild(key)
+  }, this.root)
+};
+
+ModuleCollection.prototype.getNamespace = function getNamespace (path) {
+  var module = this.root;
+  return path.reduce(function (namespace, key) {
+    module = module.getChild(key);
+    return namespace + (module.namespaced ? key + '/' : '')
+  }, '')
+};
+
+ModuleCollection.prototype.update = function update$1 (rawRootModule) {
+  update([], this.root, rawRootModule);
+};
+
+ModuleCollection.prototype.register = function register (path, rawModule, runtime) {
+    var this$1 = this;
+    if ( runtime === void 0 ) runtime = true;
+
+  if (false) {
+    assertRawModule(path, rawModule);
+  }
+
+  var newModule = new Module(rawModule, runtime);
+  if (path.length === 0) {
+    this.root = newModule;
+  } else {
+    var parent = this.get(path.slice(0, -1));
+    parent.addChild(path[path.length - 1], newModule);
+  }
+
+  // register nested modules
+  if (rawModule.modules) {
+    forEachValue(rawModule.modules, function (rawChildModule, key) {
+      this$1.register(path.concat(key), rawChildModule, runtime);
+    });
+  }
+};
+
+ModuleCollection.prototype.unregister = function unregister (path) {
+  var parent = this.get(path.slice(0, -1));
+  var key = path[path.length - 1];
+  if (!parent.getChild(key).runtime) { return }
+
+  parent.removeChild(key);
+};
+
+function update (path, targetModule, newModule) {
+  if (false) {
+    assertRawModule(path, newModule);
+  }
+
+  // update target module
+  targetModule.update(newModule);
+
+  // update nested modules
+  if (newModule.modules) {
+    for (var key in newModule.modules) {
+      if (!targetModule.getChild(key)) {
+        if (false) {
+          console.warn(
+            "[vuex] trying to add a new module '" + key + "' on hot reloading, " +
+            'manual reload is needed'
+          );
+        }
+        return
+      }
+      update(
+        path.concat(key),
+        targetModule.getChild(key),
+        newModule.modules[key]
+      );
+    }
+  }
+}
+
+var functionAssert = {
+  assert: function (value) { return typeof value === 'function'; },
+  expected: 'function'
+};
+
+var objectAssert = {
+  assert: function (value) { return typeof value === 'function' ||
+    (typeof value === 'object' && typeof value.handler === 'function'); },
+  expected: 'function or object with "handler" function'
+};
+
+var assertTypes = {
+  getters: functionAssert,
+  mutations: functionAssert,
+  actions: objectAssert
+};
+
+function assertRawModule (path, rawModule) {
+  Object.keys(assertTypes).forEach(function (key) {
+    if (!rawModule[key]) { return }
+
+    var assertOptions = assertTypes[key];
+
+    forEachValue(rawModule[key], function (value, type) {
+      assert(
+        assertOptions.assert(value),
+        makeAssertionMessage(path, key, type, value, assertOptions.expected)
+      );
+    });
+  });
+}
+
+function makeAssertionMessage (path, key, type, value, expected) {
+  var buf = key + " should be " + expected + " but \"" + key + "." + type + "\"";
+  if (path.length > 0) {
+    buf += " in module \"" + (path.join('.')) + "\"";
+  }
+  buf += " is " + (JSON.stringify(value)) + ".";
+  return buf
+}
+
+var Vue; // bind on install
+
+var Store = function Store (options) {
+  var this$1 = this;
+  if ( options === void 0 ) options = {};
+
+  // Auto install if it is not done yet and `window` has `Vue`.
+  // To allow users to avoid auto-installation in some cases,
+  // this code should be placed here. See #731
+  if (!Vue && typeof window !== 'undefined' && window.Vue) {
+    install(window.Vue);
+  }
+
+  if (false) {
+    assert(Vue, "must call Vue.use(Vuex) before creating a store instance.");
+    assert(typeof Promise !== 'undefined', "vuex requires a Promise polyfill in this browser.");
+    assert(this instanceof Store, "Store must be called with the new operator.");
+  }
+
+  var plugins = options.plugins; if ( plugins === void 0 ) plugins = [];
+  var strict = options.strict; if ( strict === void 0 ) strict = false;
+
+  var state = options.state; if ( state === void 0 ) state = {};
+  if (typeof state === 'function') {
+    state = state() || {};
+  }
+
+  // store internal state
+  this._committing = false;
+  this._actions = Object.create(null);
+  this._actionSubscribers = [];
+  this._mutations = Object.create(null);
+  this._wrappedGetters = Object.create(null);
+  this._modules = new ModuleCollection(options);
+  this._modulesNamespaceMap = Object.create(null);
+  this._subscribers = [];
+  this._watcherVM = new Vue();
+
+  // bind commit and dispatch to self
+  var store = this;
+  var ref = this;
+  var dispatch = ref.dispatch;
+  var commit = ref.commit;
+  this.dispatch = function boundDispatch (type, payload) {
+    return dispatch.call(store, type, payload)
+  };
+  this.commit = function boundCommit (type, payload, options) {
+    return commit.call(store, type, payload, options)
+  };
+
+  // strict mode
+  this.strict = strict;
+
+  // init root module.
+  // this also recursively registers all sub-modules
+  // and collects all module getters inside this._wrappedGetters
+  installModule(this, state, [], this._modules.root);
+
+  // initialize the store vm, which is responsible for the reactivity
+  // (also registers _wrappedGetters as computed properties)
+  resetStoreVM(this, state);
+
+  // apply plugins
+  plugins.forEach(function (plugin) { return plugin(this$1); });
+
+  if (Vue.config.devtools) {
+    devtoolPlugin(this);
+  }
+};
+
+var prototypeAccessors = { state: { configurable: true } };
+
+prototypeAccessors.state.get = function () {
+  return this._vm._data.$$state
+};
+
+prototypeAccessors.state.set = function (v) {
+  if (false) {
+    assert(false, "Use store.replaceState() to explicit replace store state.");
+  }
+};
+
+Store.prototype.commit = function commit (_type, _payload, _options) {
+    var this$1 = this;
+
+  // check object-style commit
+  var ref = unifyObjectStyle(_type, _payload, _options);
+    var type = ref.type;
+    var payload = ref.payload;
+    var options = ref.options;
+
+  var mutation = { type: type, payload: payload };
+  var entry = this._mutations[type];
+  if (!entry) {
+    if (false) {
+      console.error(("[vuex] unknown mutation type: " + type));
+    }
+    return
+  }
+  this._withCommit(function () {
+    entry.forEach(function commitIterator (handler) {
+      handler(payload);
+    });
+  });
+  this._subscribers.forEach(function (sub) { return sub(mutation, this$1.state); });
+
+  if (
+    false
+  ) {
+    console.warn(
+      "[vuex] mutation type: " + type + ". Silent option has been removed. " +
+      'Use the filter functionality in the vue-devtools'
+    );
+  }
+};
+
+Store.prototype.dispatch = function dispatch (_type, _payload) {
+    var this$1 = this;
+
+  // check object-style dispatch
+  var ref = unifyObjectStyle(_type, _payload);
+    var type = ref.type;
+    var payload = ref.payload;
+
+  var action = { type: type, payload: payload };
+  var entry = this._actions[type];
+  if (!entry) {
+    if (false) {
+      console.error(("[vuex] unknown action type: " + type));
+    }
+    return
+  }
+
+  this._actionSubscribers.forEach(function (sub) { return sub(action, this$1.state); });
+
+  return entry.length > 1
+    ? Promise.all(entry.map(function (handler) { return handler(payload); }))
+    : entry[0](payload)
+};
+
+Store.prototype.subscribe = function subscribe (fn) {
+  return genericSubscribe(fn, this._subscribers)
+};
+
+Store.prototype.subscribeAction = function subscribeAction (fn) {
+  return genericSubscribe(fn, this._actionSubscribers)
+};
+
+Store.prototype.watch = function watch (getter, cb, options) {
+    var this$1 = this;
+
+  if (false) {
+    assert(typeof getter === 'function', "store.watch only accepts a function.");
+  }
+  return this._watcherVM.$watch(function () { return getter(this$1.state, this$1.getters); }, cb, options)
+};
+
+Store.prototype.replaceState = function replaceState (state) {
+    var this$1 = this;
+
+  this._withCommit(function () {
+    this$1._vm._data.$$state = state;
+  });
+};
+
+Store.prototype.registerModule = function registerModule (path, rawModule, options) {
+    if ( options === void 0 ) options = {};
+
+  if (typeof path === 'string') { path = [path]; }
+
+  if (false) {
+    assert(Array.isArray(path), "module path must be a string or an Array.");
+    assert(path.length > 0, 'cannot register the root module by using registerModule.');
+  }
+
+  this._modules.register(path, rawModule);
+  installModule(this, this.state, path, this._modules.get(path), options.preserveState);
+  // reset store to update getters...
+  resetStoreVM(this, this.state);
+};
+
+Store.prototype.unregisterModule = function unregisterModule (path) {
+    var this$1 = this;
+
+  if (typeof path === 'string') { path = [path]; }
+
+  if (false) {
+    assert(Array.isArray(path), "module path must be a string or an Array.");
+  }
+
+  this._modules.unregister(path);
+  this._withCommit(function () {
+    var parentState = getNestedState(this$1.state, path.slice(0, -1));
+    Vue.delete(parentState, path[path.length - 1]);
+  });
+  resetStore(this);
+};
+
+Store.prototype.hotUpdate = function hotUpdate (newOptions) {
+  this._modules.update(newOptions);
+  resetStore(this, true);
+};
+
+Store.prototype._withCommit = function _withCommit (fn) {
+  var committing = this._committing;
+  this._committing = true;
+  fn();
+  this._committing = committing;
+};
+
+Object.defineProperties( Store.prototype, prototypeAccessors );
+
+function genericSubscribe (fn, subs) {
+  if (subs.indexOf(fn) < 0) {
+    subs.push(fn);
+  }
+  return function () {
+    var i = subs.indexOf(fn);
+    if (i > -1) {
+      subs.splice(i, 1);
+    }
+  }
+}
+
+function resetStore (store, hot) {
+  store._actions = Object.create(null);
+  store._mutations = Object.create(null);
+  store._wrappedGetters = Object.create(null);
+  store._modulesNamespaceMap = Object.create(null);
+  var state = store.state;
+  // init all modules
+  installModule(store, state, [], store._modules.root, true);
+  // reset vm
+  resetStoreVM(store, state, hot);
+}
+
+function resetStoreVM (store, state, hot) {
+  var oldVm = store._vm;
+
+  // bind store public getters
+  store.getters = {};
+  var wrappedGetters = store._wrappedGetters;
+  var computed = {};
+  forEachValue(wrappedGetters, function (fn, key) {
+    // use computed to leverage its lazy-caching mechanism
+    computed[key] = function () { return fn(store); };
+    Object.defineProperty(store.getters, key, {
+      get: function () { return store._vm[key]; },
+      enumerable: true // for local getters
+    });
+  });
+
+  // use a Vue instance to store the state tree
+  // suppress warnings just in case the user has added
+  // some funky global mixins
+  var silent = Vue.config.silent;
+  Vue.config.silent = true;
+  store._vm = new Vue({
+    data: {
+      $$state: state
+    },
+    computed: computed
+  });
+  Vue.config.silent = silent;
+
+  // enable strict mode for new vm
+  if (store.strict) {
+    enableStrictMode(store);
+  }
+
+  if (oldVm) {
+    if (hot) {
+      // dispatch changes in all subscribed watchers
+      // to force getter re-evaluation for hot reloading.
+      store._withCommit(function () {
+        oldVm._data.$$state = null;
+      });
+    }
+    Vue.nextTick(function () { return oldVm.$destroy(); });
+  }
+}
+
+function installModule (store, rootState, path, module, hot) {
+  var isRoot = !path.length;
+  var namespace = store._modules.getNamespace(path);
+
+  // register in namespace map
+  if (module.namespaced) {
+    store._modulesNamespaceMap[namespace] = module;
+  }
+
+  // set state
+  if (!isRoot && !hot) {
+    var parentState = getNestedState(rootState, path.slice(0, -1));
+    var moduleName = path[path.length - 1];
+    store._withCommit(function () {
+      Vue.set(parentState, moduleName, module.state);
+    });
+  }
+
+  var local = module.context = makeLocalContext(store, namespace, path);
+
+  module.forEachMutation(function (mutation, key) {
+    var namespacedType = namespace + key;
+    registerMutation(store, namespacedType, mutation, local);
+  });
+
+  module.forEachAction(function (action, key) {
+    var type = action.root ? key : namespace + key;
+    var handler = action.handler || action;
+    registerAction(store, type, handler, local);
+  });
+
+  module.forEachGetter(function (getter, key) {
+    var namespacedType = namespace + key;
+    registerGetter(store, namespacedType, getter, local);
+  });
+
+  module.forEachChild(function (child, key) {
+    installModule(store, rootState, path.concat(key), child, hot);
+  });
+}
+
+/**
+ * make localized dispatch, commit, getters and state
+ * if there is no namespace, just use root ones
+ */
+function makeLocalContext (store, namespace, path) {
+  var noNamespace = namespace === '';
+
+  var local = {
+    dispatch: noNamespace ? store.dispatch : function (_type, _payload, _options) {
+      var args = unifyObjectStyle(_type, _payload, _options);
+      var payload = args.payload;
+      var options = args.options;
+      var type = args.type;
+
+      if (!options || !options.root) {
+        type = namespace + type;
+        if (false) {
+          console.error(("[vuex] unknown local action type: " + (args.type) + ", global type: " + type));
+          return
+        }
+      }
+
+      return store.dispatch(type, payload)
+    },
+
+    commit: noNamespace ? store.commit : function (_type, _payload, _options) {
+      var args = unifyObjectStyle(_type, _payload, _options);
+      var payload = args.payload;
+      var options = args.options;
+      var type = args.type;
+
+      if (!options || !options.root) {
+        type = namespace + type;
+        if (false) {
+          console.error(("[vuex] unknown local mutation type: " + (args.type) + ", global type: " + type));
+          return
+        }
+      }
+
+      store.commit(type, payload, options);
+    }
+  };
+
+  // getters and state object must be gotten lazily
+  // because they will be changed by vm update
+  Object.defineProperties(local, {
+    getters: {
+      get: noNamespace
+        ? function () { return store.getters; }
+        : function () { return makeLocalGetters(store, namespace); }
+    },
+    state: {
+      get: function () { return getNestedState(store.state, path); }
+    }
+  });
+
+  return local
+}
+
+function makeLocalGetters (store, namespace) {
+  var gettersProxy = {};
+
+  var splitPos = namespace.length;
+  Object.keys(store.getters).forEach(function (type) {
+    // skip if the target getter is not match this namespace
+    if (type.slice(0, splitPos) !== namespace) { return }
+
+    // extract local getter type
+    var localType = type.slice(splitPos);
+
+    // Add a port to the getters proxy.
+    // Define as getter property because
+    // we do not want to evaluate the getters in this time.
+    Object.defineProperty(gettersProxy, localType, {
+      get: function () { return store.getters[type]; },
+      enumerable: true
+    });
+  });
+
+  return gettersProxy
+}
+
+function registerMutation (store, type, handler, local) {
+  var entry = store._mutations[type] || (store._mutations[type] = []);
+  entry.push(function wrappedMutationHandler (payload) {
+    handler.call(store, local.state, payload);
+  });
+}
+
+function registerAction (store, type, handler, local) {
+  var entry = store._actions[type] || (store._actions[type] = []);
+  entry.push(function wrappedActionHandler (payload, cb) {
+    var res = handler.call(store, {
+      dispatch: local.dispatch,
+      commit: local.commit,
+      getters: local.getters,
+      state: local.state,
+      rootGetters: store.getters,
+      rootState: store.state
+    }, payload, cb);
+    if (!isPromise(res)) {
+      res = Promise.resolve(res);
+    }
+    if (store._devtoolHook) {
+      return res.catch(function (err) {
+        store._devtoolHook.emit('vuex:error', err);
+        throw err
+      })
+    } else {
+      return res
+    }
+  });
+}
+
+function registerGetter (store, type, rawGetter, local) {
+  if (store._wrappedGetters[type]) {
+    if (false) {
+      console.error(("[vuex] duplicate getter key: " + type));
+    }
+    return
+  }
+  store._wrappedGetters[type] = function wrappedGetter (store) {
+    return rawGetter(
+      local.state, // local state
+      local.getters, // local getters
+      store.state, // root state
+      store.getters // root getters
+    )
+  };
+}
+
+function enableStrictMode (store) {
+  store._vm.$watch(function () { return this._data.$$state }, function () {
+    if (false) {
+      assert(store._committing, "Do not mutate vuex store state outside mutation handlers.");
+    }
+  }, { deep: true, sync: true });
+}
+
+function getNestedState (state, path) {
+  return path.length
+    ? path.reduce(function (state, key) { return state[key]; }, state)
+    : state
+}
+
+function unifyObjectStyle (type, payload, options) {
+  if (isObject(type) && type.type) {
+    options = payload;
+    payload = type;
+    type = type.type;
+  }
+
+  if (false) {
+    assert(typeof type === 'string', ("Expects string as the type, but found " + (typeof type) + "."));
+  }
+
+  return { type: type, payload: payload, options: options }
+}
+
+function install (_Vue) {
+  if (Vue && _Vue === Vue) {
+    if (false) {
+      console.error(
+        '[vuex] already installed. Vue.use(Vuex) should be called only once.'
+      );
+    }
+    return
+  }
+  Vue = _Vue;
+  applyMixin(Vue);
+}
+
+var mapState = normalizeNamespace(function (namespace, states) {
+  var res = {};
+  normalizeMap(states).forEach(function (ref) {
+    var key = ref.key;
+    var val = ref.val;
+
+    res[key] = function mappedState () {
+      var state = this.$store.state;
+      var getters = this.$store.getters;
+      if (namespace) {
+        var module = getModuleByNamespace(this.$store, 'mapState', namespace);
+        if (!module) {
+          return
+        }
+        state = module.context.state;
+        getters = module.context.getters;
+      }
+      return typeof val === 'function'
+        ? val.call(this, state, getters)
+        : state[val]
+    };
+    // mark vuex getter for devtools
+    res[key].vuex = true;
+  });
+  return res
+});
+
+var mapMutations = normalizeNamespace(function (namespace, mutations) {
+  var res = {};
+  normalizeMap(mutations).forEach(function (ref) {
+    var key = ref.key;
+    var val = ref.val;
+
+    res[key] = function mappedMutation () {
+      var args = [], len = arguments.length;
+      while ( len-- ) args[ len ] = arguments[ len ];
+
+      var commit = this.$store.commit;
+      if (namespace) {
+        var module = getModuleByNamespace(this.$store, 'mapMutations', namespace);
+        if (!module) {
+          return
+        }
+        commit = module.context.commit;
+      }
+      return typeof val === 'function'
+        ? val.apply(this, [commit].concat(args))
+        : commit.apply(this.$store, [val].concat(args))
+    };
+  });
+  return res
+});
+
+var mapGetters = normalizeNamespace(function (namespace, getters) {
+  var res = {};
+  normalizeMap(getters).forEach(function (ref) {
+    var key = ref.key;
+    var val = ref.val;
+
+    val = namespace + val;
+    res[key] = function mappedGetter () {
+      if (namespace && !getModuleByNamespace(this.$store, 'mapGetters', namespace)) {
+        return
+      }
+      if (false) {
+        console.error(("[vuex] unknown getter: " + val));
+        return
+      }
+      return this.$store.getters[val]
+    };
+    // mark vuex getter for devtools
+    res[key].vuex = true;
+  });
+  return res
+});
+
+var mapActions = normalizeNamespace(function (namespace, actions) {
+  var res = {};
+  normalizeMap(actions).forEach(function (ref) {
+    var key = ref.key;
+    var val = ref.val;
+
+    res[key] = function mappedAction () {
+      var args = [], len = arguments.length;
+      while ( len-- ) args[ len ] = arguments[ len ];
+
+      var dispatch = this.$store.dispatch;
+      if (namespace) {
+        var module = getModuleByNamespace(this.$store, 'mapActions', namespace);
+        if (!module) {
+          return
+        }
+        dispatch = module.context.dispatch;
+      }
+      return typeof val === 'function'
+        ? val.apply(this, [dispatch].concat(args))
+        : dispatch.apply(this.$store, [val].concat(args))
+    };
+  });
+  return res
+});
+
+var createNamespacedHelpers = function (namespace) { return ({
+  mapState: mapState.bind(null, namespace),
+  mapGetters: mapGetters.bind(null, namespace),
+  mapMutations: mapMutations.bind(null, namespace),
+  mapActions: mapActions.bind(null, namespace)
+}); };
+
+function normalizeMap (map) {
+  return Array.isArray(map)
+    ? map.map(function (key) { return ({ key: key, val: key }); })
+    : Object.keys(map).map(function (key) { return ({ key: key, val: map[key] }); })
+}
+
+function normalizeNamespace (fn) {
+  return function (namespace, map) {
+    if (typeof namespace !== 'string') {
+      map = namespace;
+      namespace = '';
+    } else if (namespace.charAt(namespace.length - 1) !== '/') {
+      namespace += '/';
+    }
+    return fn(namespace, map)
+  }
+}
+
+function getModuleByNamespace (store, helper, namespace) {
+  var module = store._modulesNamespaceMap[namespace];
+  if (false) {
+    console.error(("[vuex] module namespace not found in " + helper + "(): " + namespace));
+  }
+  return module
+}
+
+var index_esm = {
+  Store: Store,
+  install: install,
+  version: '3.0.1',
+  mapState: mapState,
+  mapMutations: mapMutations,
+  mapGetters: mapGetters,
+  mapActions: mapActions,
+  createNamespacedHelpers: createNamespacedHelpers
+};
+
+
+/* harmony default export */ __webpack_exports__["a"] = (index_esm);
+
+
+/***/ }),
+
 /***/ "NpIQ":
 /***/ (function(module, exports) {
 
@@ -26247,6 +27846,11 @@ module.exports = class bitstamp extends Exchange {
                 'api': 'https://www.bitstamp.net/api',
                 'www': 'https://www.bitstamp.net',
                 'doc': 'https://www.bitstamp.net/api',
+            },
+            'requiredCredentials': {
+                'apiKey': true,
+                'secret': true,
+                'uid': true,
             },
             'api': {
                 'public': {
@@ -26294,24 +27898,28 @@ module.exports = class bitstamp extends Exchange {
                     ],
                 },
             },
-            'markets': {
-                'BTC/USD': { 'id': 'btcusd', 'symbol': 'BTC/USD', 'base': 'BTC', 'quote': 'USD', 'taker': 0.0025 },
-                'BTC/EUR': { 'id': 'btceur', 'symbol': 'BTC/EUR', 'base': 'BTC', 'quote': 'EUR', 'taker': 0.0025 },
-                'EUR/USD': { 'id': 'eurusd', 'symbol': 'EUR/USD', 'base': 'EUR', 'quote': 'USD', 'taker': 0.0025 },
-                'XRP/USD': { 'id': 'xrpusd', 'symbol': 'XRP/USD', 'base': 'XRP', 'quote': 'USD', 'taker': 0.0025 },
-                'XRP/EUR': { 'id': 'xrpeur', 'symbol': 'XRP/EUR', 'base': 'XRP', 'quote': 'EUR', 'taker': 0.0025 },
-                'XRP/BTC': { 'id': 'xrpbtc', 'symbol': 'XRP/BTC', 'base': 'XRP', 'quote': 'BTC', 'taker': 0.0025 },
-                'LTC/USD': { 'id': 'ltcusd', 'symbol': 'LTC/USD', 'base': 'LTC', 'quote': 'USD', 'taker': 0.0025 },
-                'LTC/EUR': { 'id': 'ltceur', 'symbol': 'LTC/EUR', 'base': 'LTC', 'quote': 'EUR', 'taker': 0.0025 },
-                'LTC/BTC': { 'id': 'ltcbtc', 'symbol': 'LTC/BTC', 'base': 'LTC', 'quote': 'BTC', 'taker': 0.0025 },
-                'ETH/USD': { 'id': 'ethusd', 'symbol': 'ETH/USD', 'base': 'ETH', 'quote': 'USD', 'taker': 0.0025 },
-                'ETH/EUR': { 'id': 'etheur', 'symbol': 'ETH/EUR', 'base': 'ETH', 'quote': 'EUR', 'taker': 0.0025 },
-                'ETH/BTC': { 'id': 'ethbtc', 'symbol': 'ETH/BTC', 'base': 'ETH', 'quote': 'BTC', 'taker': 0.0025 },
-            },
         });
     }
 
+    async fetchMarkets () {
+        return {
+            'BTC/USD': { 'id': 'btcusd', 'symbol': 'BTC/USD', 'base': 'BTC', 'quote': 'USD', 'maker': 0.0025, 'taker': 0.0025 },
+            'BTC/EUR': { 'id': 'btceur', 'symbol': 'BTC/EUR', 'base': 'BTC', 'quote': 'EUR', 'maker': 0.0025, 'taker': 0.0025 },
+            'EUR/USD': { 'id': 'eurusd', 'symbol': 'EUR/USD', 'base': 'EUR', 'quote': 'USD', 'maker': 0.0025, 'taker': 0.0025 },
+            'XRP/USD': { 'id': 'xrpusd', 'symbol': 'XRP/USD', 'base': 'XRP', 'quote': 'USD', 'maker': 0.0025, 'taker': 0.0025 },
+            'XRP/EUR': { 'id': 'xrpeur', 'symbol': 'XRP/EUR', 'base': 'XRP', 'quote': 'EUR', 'maker': 0.0025, 'taker': 0.0025 },
+            'XRP/BTC': { 'id': 'xrpbtc', 'symbol': 'XRP/BTC', 'base': 'XRP', 'quote': 'BTC', 'maker': 0.0025, 'taker': 0.0025 },
+            'LTC/USD': { 'id': 'ltcusd', 'symbol': 'LTC/USD', 'base': 'LTC', 'quote': 'USD', 'maker': 0.0025, 'taker': 0.0025 },
+            'LTC/EUR': { 'id': 'ltceur', 'symbol': 'LTC/EUR', 'base': 'LTC', 'quote': 'EUR', 'maker': 0.0025, 'taker': 0.0025 },
+            'LTC/BTC': { 'id': 'ltcbtc', 'symbol': 'LTC/BTC', 'base': 'LTC', 'quote': 'BTC', 'maker': 0.0025, 'taker': 0.0025 },
+            'ETH/USD': { 'id': 'ethusd', 'symbol': 'ETH/USD', 'base': 'ETH', 'quote': 'USD', 'maker': 0.0025, 'taker': 0.0025 },
+            'ETH/EUR': { 'id': 'etheur', 'symbol': 'ETH/EUR', 'base': 'ETH', 'quote': 'EUR', 'maker': 0.0025, 'taker': 0.0025 },
+            'ETH/BTC': { 'id': 'ethbtc', 'symbol': 'ETH/BTC', 'base': 'ETH', 'quote': 'BTC', 'maker': 0.0025, 'taker': 0.0025 },
+        };
+    }
+
     async fetchOrderBook (symbol, params = {}) {
+        await this.loadMarkets ();
         let orderbook = await this.publicGetOrderBookPair (this.extend ({
             'pair': this.marketId (symbol),
         }, params));
@@ -26320,6 +27928,7 @@ module.exports = class bitstamp extends Exchange {
     }
 
     async fetchTicker (symbol, params = {}) {
+        await this.loadMarkets ();
         let ticker = await this.publicGetTickerPair (this.extend ({
             'pair': this.marketId (symbol),
         }, params));
@@ -26380,6 +27989,7 @@ module.exports = class bitstamp extends Exchange {
     }
 
     async fetchTrades (symbol, since = undefined, limit = undefined, params = {}) {
+        await this.loadMarkets ();
         let market = this.market (symbol);
         let response = await this.publicGetTransactionsPair (this.extend ({
             'pair': market['id'],
@@ -26389,6 +27999,7 @@ module.exports = class bitstamp extends Exchange {
     }
 
     async fetchBalance (params = {}) {
+        await this.loadMarkets ();
         let balance = await this.privatePostBalance ();
         let result = { 'info': balance };
         for (let c = 0; c < this.currencies.length; c++) {
@@ -26410,6 +28021,7 @@ module.exports = class bitstamp extends Exchange {
     }
 
     async createOrder (symbol, type, side, amount, price = undefined, params = {}) {
+        await this.loadMarkets ();
         let method = 'privatePost' + this.capitalize (side);
         let order = {
             'pair': this.marketId (symbol),
@@ -26428,6 +28040,7 @@ module.exports = class bitstamp extends Exchange {
     }
 
     async cancelOrder (id, symbol = undefined, params = {}) {
+        await this.loadMarkets ();
         return await this.privatePostCancelOrder ({ 'id': id });
     }
 
@@ -26471,8 +28084,7 @@ module.exports = class bitstamp extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
-            if (!this.uid)
-                throw new AuthenticationError (this.id + ' requires `' + this.id + '.uid` property for authentication');
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             let auth = nonce + this.uid + this.apiKey;
             let signature = this.encode (this.hmac (this.encode (auth), this.encode (this.secret)));
@@ -26720,7 +28332,8 @@ module.exports = function (it) {
 const isNode    = (typeof window === 'undefined')
     , functions = __webpack_require__ ("wBRy")
     , throttle  = __webpack_require__ ("6utV")
-    , fetch     = __webpack_require__ ("1sg+")
+    , fetch     = __webpack_require__ ("kYgY")().fetch
+    , Market    = __webpack_require__ ("YkRq")
 
 const { deepExtend
       , extend
@@ -26736,9 +28349,26 @@ const { ExchangeError
       , RequestTimeout
       , ExchangeNotAvailable } = __webpack_require__ ("AnAA")
 
-//-----------------------------------------------------------------------------
+// stub until we get a better solution for Webpack and React
+// const journal = isNode && require ('./journal')
+const journal = undefined
 
 module.exports = class Exchange {
+
+    getMarket (symbol) {
+
+        if (!this.marketClasses)
+            this.marketClasses = {}
+
+        let marketClass = this.marketClasses[symbol]
+
+        if (marketClass)
+            return marketClass
+
+        marketClass = new Market (this, symbol)
+        this.marketClasses[symbol] = marketClass // only one Market instance per market
+        return marketClass
+    }
 
     describe () { return {} }
 
@@ -26754,7 +28384,7 @@ module.exports = class Exchange {
         if (isNode) {
             this.userAgent = {
                 'User-Agent': 'ccxt/' + Exchange.ccxtVersion +
-                    ' (+https://github.com/ccxt-dev/ccxt)' +
+                    ' (+https://github.com/ccxt/ccxt)' +
                     ' Node.js/' + this.nodeVersion + ' (JavaScript)'
             }
         }
@@ -26775,6 +28405,8 @@ module.exports = class Exchange {
 
         this.timeout         = 10000 // milliseconds
         this.verbose         = false
+        this.debug           = false
+        this.journal         = 'debug.json'
         this.userAgent       = false
         this.twofa           = false // two-factor authentication (2FA)
         this.substituteCommonCurrencyCodes = true
@@ -26800,22 +28432,12 @@ module.exports = class Exchange {
         this.hasCreateOrder       = this.hasPrivateAPI
         this.hasCancelOrder       = this.hasPrivateAPI
 
-        // API methods metainfo
-        this.has = {
-            'deposit': false,
-            'fetchTicker': true,
-            'fetchOrderBook': true,
-            'fetchTrades': true,
-            'fetchTickers': false,
-            'fetchOHLCV': false,
-            'fetchBalance': true,
-            'fetchOrder': false,
-            'fetchOrders': false,
-            'fetchOpenOrders': false,
-            'fetchClosedOrders': false,
-            'fetchMyTrades': false,
-            'fetchCurrencies': false,
-            'withdraw': false,
+        this.requiredCredentials = {
+            'apiKey':   true,
+            'secret':   true,
+            'uid':      false,
+            'login':    false,
+            'password': false,
         }
 
         this.balance    = {}
@@ -26873,6 +28495,28 @@ module.exports = class Exchange {
         this.amount_to_precision         = this.amountToPrecision
         this.fee_to_precision            = this.feeToPrecision
         this.cost_to_precision           = this.costToPrecision
+        this.truncate                    = functions.truncate
+
+        // API methods metainfo
+        this.has = {
+            'cancelOrder': this.hasPrivateAPI,
+            'createOrder': this.hasPrivateAPI,
+            'deposit': false,
+            'fetchBalance': this.hasPrivateAPI,
+            'fetchClosedOrders': false,
+            'fetchCurrencies': false,
+            'fetchMarkets': true,
+            'fetchMyTrades': false,
+            'fetchOHLCV': false,
+            'fetchOpenOrders': false,
+            'fetchOrder': false,
+            'fetchOrderBook': true,
+            'fetchOrders': false,
+            'fetchTicker': true,
+            'fetchTickers': false,
+            'fetchTrades': true,
+            'withdraw': false,
+        }
 
         // merge configs
         const config = deepExtend (this.describe (), userConfig)
@@ -26888,6 +28532,10 @@ module.exports = class Exchange {
 
         if (this.markets)
             this.setMarkets (this.markets)
+
+        if (this.debug && journal) {
+            journal (() => this.journal, this, Object.keys (this.has))
+        }
     }
 
     defaults () {
@@ -26900,6 +28548,13 @@ module.exports = class Exchange {
 
     encodeURIComponent (...args) {
         return encodeURIComponent (...args)
+    }
+
+    checkRequiredCredentials () {
+        Object.keys (this.requiredCredentials).map (key => {
+            if (this.requiredCredentials[key] && !this[key])
+                throw new AuthenticationError (this.id + ' requires `' + key + '`')
+        })
     }
 
     initRestRateLimiter () {
@@ -26917,7 +28572,7 @@ module.exports = class Exchange {
         this.executeRestRequest = function (url, method = 'GET', headers = undefined, body = undefined) {
 
             let promise =
-                fetch (url, { 'method': method, 'headers': headers, 'body': body })
+                fetch (url, { 'method': method, 'headers': headers, 'body': body, 'agent': this.tunnelAgent || null})
                     .catch (e => {
                         if (isNode)
                             throw new ExchangeNotAvailable ([ this.id, method, url, e.type, e.message ].join (' '))
@@ -27046,7 +28701,7 @@ module.exports = class Exchange {
                 error = DDoSProtection
             } else {
                 error = ExchangeNotAvailable
-                details = body + ' (possible reasons: ' + [
+                details += ' (possible reasons: ' + [
                     'invalid API keys',
                     'bad or old nonce',
                     'exchange is down or offline',
@@ -27221,8 +28876,8 @@ module.exports = class Exchange {
     }
 
     extractParams (string) {
-        var re = /{([a-zA-Z0-9_]+?)}/g
-        var matches = []
+        let re = /{([a-zA-Z0-9_]+?)}/g
+        let matches = []
         let match
         while (match = re.exec (string))
             matches.push (match[1])
@@ -27230,7 +28885,7 @@ module.exports = class Exchange {
     }
 
     implodeParams (string, params) {
-        for (var property in params)
+        for (let property in params)
             string = string.replace ('{' + property + '}', params[property])
         return string
     }
@@ -27394,7 +29049,8 @@ module.exports = class Exchange {
     }
 
     precisionFromString (string) {
-        return string.replace (/0+$/g, '').split ('.')[1].length;
+        const split = string.replace (/0+$/g, '').split ('.')
+        return (split.length > 1) ? (split[1].length) : 0
     }
 
     costToPrecision (symbol, cost) {
@@ -27454,6 +29110,7 @@ module.exports = class Exchange {
         return Y + '-' + m + '-' + d + infix + H + ':' + M + ':' + S
     }
 }
+
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__("W2nU")))
 
 /***/ }),
@@ -27611,8 +29268,8 @@ module.exports = class luno extends Exchange {
             'change': undefined,
             'percentage': undefined,
             'average': undefined,
-            'baseVolume': undefined,
-            'quoteVolume': parseFloat (ticker['rolling_24_hour_volume']),
+            'baseVolume': parseFloat (ticker['rolling_24_hour_volume']),
+            'quoteVolume': undefined,
             'info': ticker,
         };
     }
@@ -27705,6 +29362,7 @@ module.exports = class luno extends Exchange {
         if (Object.keys (query).length)
             url += '?' + this.urlencode (query);
         if (api == 'private') {
+            this.checkRequiredCredentials ();
             let auth = this.encode (this.apiKey + ':' + this.secret);
             auth = this.stringToBase64 (auth);
             headers = { 'Authorization': 'Basic ' + this.decode (auth) };
@@ -28336,6 +29994,11 @@ module.exports = class coinmate extends Exchange {
                     'https://coinmate.io/developers',
                 ],
             },
+            'requiredCredentials': {
+                'apiKey': true,
+                'secret': true,
+                'uid': true,
+            },
             'api': {
                 'public': {
                     'get': [
@@ -28364,8 +30027,15 @@ module.exports = class coinmate extends Exchange {
                 },
             },
             'markets': {
-                'BTC/EUR': { 'id': 'BTC_EUR', 'symbol': 'BTC/EUR', 'base': 'BTC', 'quote': 'EUR' },
-                'BTC/CZK': { 'id': 'BTC_CZK', 'symbol': 'BTC/CZK', 'base': 'BTC', 'quote': 'CZK' },
+                'BTC/EUR': { 'id': 'BTC_EUR', 'symbol': 'BTC/EUR', 'base': 'BTC', 'quote': 'EUR', 'precision': { 'amount': 4, 'price': 2 }},
+                'BTC/CZK': { 'id': 'BTC_CZK', 'symbol': 'BTC/CZK', 'base': 'BTC', 'quote': 'CZK', 'precision': { 'amount': 4, 'price': 2 }},
+                'LTC/BTC': { 'id': 'LTC_BTC', 'symbol': 'LTC/BTC', 'base': 'LTC', 'quote': 'BTC', 'precision': { 'amount': 4, 'price': 5 }},
+            },
+            'fees': {
+                'trading': {
+                    'maker': 0.0005,
+                    'taker': 0.0035,
+                },
             },
         });
     }
@@ -28483,8 +30153,7 @@ module.exports = class coinmate extends Exchange {
             if (Object.keys (params).length)
                 url += '?' + this.urlencode (params);
         } else {
-            if (!this.uid)
-                throw new AuthenticationError (this.id + ' requires `' + this.id + '.uid` property for authentication');
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             let auth = nonce + this.uid + this.apiKey;
             let signature = this.hmac (this.encode (auth), this.encode (this.secret));
@@ -28581,6 +30250,12 @@ module.exports = class bitflyer extends Exchange {
                         'cancelparentorder',
                         'cancelallchildorders',
                     ],
+                },
+            },
+            'fees': {
+                'trading': {
+                    'maker': 0.25 / 100,
+                    'taker': 0.25 / 100,
                 },
             },
         });
@@ -28759,6 +30434,7 @@ module.exports = class bitflyer extends Exchange {
         }
         let url = this.urls['api'] + request;
         if (api == 'private') {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             body = this.json (params);
             let auth = [ nonce, method, request, body ].join ('');
@@ -28813,6 +30489,10 @@ module.exports = class _1broker extends Exchange {
                 'api': 'https://1broker.com/api',
                 'www': 'https://1broker.com',
                 'doc': 'https://1broker.com/?c=en/content/api-documentation',
+            },
+            'requiredCredentials': {
+                'apiKey': true,
+                'secret': false,
             },
             'api': {
                 'private': {
@@ -29024,8 +30704,7 @@ module.exports = class _1broker extends Exchange {
     }
 
     sign (path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined) {
-        if (!this.apiKey)
-            throw new AuthenticationError (this.id + ' requires apiKey for all requests');
+        this.checkRequiredCredentials ();
         let url = this.urls['api'] + '/' + this.version + '/' + path + '.php';
         let query = this.extend ({ 'token': this.apiKey }, params);
         url += '?' + this.urlencode (query);
@@ -29177,7 +30856,7 @@ const errors    = __webpack_require__ ("AnAA")
 //-----------------------------------------------------------------------------
 // this is updated by vss.js when building
 
-const version = '1.10.63'
+const version = '1.10.176'
 
 Exchange.ccxtVersion = version
 
@@ -29274,7 +30953,8 @@ const exchanges = {
     'xbtce':                   __webpack_require__ ("wPFK"),
     'yobit':                   __webpack_require__ ("o8ec"),
     'yunbi':                   __webpack_require__ ("tHBh"),
-    'zaif':                    __webpack_require__ ("F41N"),    
+    'zaif':                    __webpack_require__ ("F41N"),
+    'zb':                      __webpack_require__ ("8XlC"),    
 }
 
 //-----------------------------------------------------------------------------
@@ -29282,6 +30962,32 @@ const exchanges = {
 module.exports = Object.assign ({ version, Exchange, exchanges: Object.keys (exchanges) }, exchanges, functions, errors)
 
 //-----------------------------------------------------------------------------
+
+
+/***/ }),
+
+/***/ "Rrel":
+/***/ (function(module, exports, __webpack_require__) {
+
+// fallback for IE11 buggy Object.getOwnPropertyNames with iframe and window
+var toIObject = __webpack_require__("TcQ7");
+var gOPN = __webpack_require__("n0T6").f;
+var toString = {}.toString;
+
+var windowNames = typeof window == 'object' && window && Object.getOwnPropertyNames
+  ? Object.getOwnPropertyNames(window) : [];
+
+var getWindowNames = function (it) {
+  try {
+    return gOPN(it);
+  } catch (e) {
+    return windowNames.slice();
+  }
+};
+
+module.exports.f = function getOwnPropertyNames(it) {
+  return windowNames && toString.call(it) == '[object Window]' ? getWindowNames(it) : gOPN(toIObject(it));
+};
 
 
 /***/ }),
@@ -29462,6 +31168,7 @@ module.exports = class bitcoincoid extends Exchange {
         if (api == 'public') {
             url += '/' + this.implodeParams (path, params);
         } else {
+            this.checkRequiredCredentials ();
             body = this.urlencode (this.extend ({
                 'method': path,
                 'nonce': this.nonce (),
@@ -29608,6 +31315,12 @@ module.exports = class bitmarket extends Exchange {
                 'LTC/PLN': { 'id': 'LTCPLN', 'symbol': 'LTC/PLN', 'base': 'LTC', 'quote': 'PLN' },
                 'LTC/BTC': { 'id': 'LTCBTC', 'symbol': 'LTC/BTC', 'base': 'LTC', 'quote': 'BTC' },
                 'LiteMineX/BTC': { 'id': 'LiteMineXBTC', 'symbol': 'LiteMineX/BTC', 'base': 'LiteMineX', 'quote': 'BTC' },
+            },
+            'fees': {
+                'trading': {
+                    'maker': 0.0015,
+                    'taker': 0.0045,
+                },
             },
         });
     }
@@ -29789,6 +31502,7 @@ module.exports = class bitmarket extends Exchange {
         if (api == 'public') {
             url += '/' + this.implodeParams (path + '.json', params);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             let query = this.extend ({
                 'tonce': nonce,
@@ -30049,6 +31763,7 @@ module.exports = class bitso extends Exchange {
             if (Object.keys (params).length)
                 url += '?' + this.urlencode (params);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             let request = [ nonce, method, query ].join ('');
             if (Object.keys (params).length) {
@@ -31132,6 +32847,7 @@ module.exports = class acx extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             let query = this.urlencode (this.keysort (this.extend ({
                 'access_key': this.apiKey,
@@ -31271,6 +32987,7 @@ module.exports = class binance extends Exchange {
             'version': 'v1',
             'hasCORS': false,
             // obsolete metainfo interface
+            'hasFetchTickers': true,
             'hasFetchOHLCV': true,
             'hasFetchMyTrades': true,
             'hasFetchOrder': true,
@@ -31279,6 +32996,7 @@ module.exports = class binance extends Exchange {
             'hasWithdraw': true,
             // new metainfo interface
             'has': {
+                'fetchTickers': true,
                 'fetchOHLCV': true,
                 'fetchMyTrades': true,
                 'fetchOrder': true,
@@ -31308,8 +33026,8 @@ module.exports = class binance extends Exchange {
                 'api': {
                     'web': 'https://www.binance.com',
                     'wapi': 'https://www.binance.com/wapi',
-                    'public': 'https://www.binance.com/api',
-                    'private': 'https://www.binance.com/api',
+                    'public': 'https://api.binance.com/api',
+                    'private': 'https://api.binance.com/api',
                 },
                 'www': 'https://www.binance.com',
                 'doc': 'https://www.binance.com/restapipub.html',
@@ -31434,8 +33152,8 @@ module.exports = class binance extends Exchange {
         for (let i = 0; i < markets.length; i++) {
             let market = markets[i];
             let id = market['symbol'];
-            let base = market['baseAsset'];
-            let quote = market['quoteAsset'];
+            let base = this.commonCurrencyCode (market['baseAsset']);
+            let quote = this.commonCurrencyCode (market['quoteAsset']);
             let symbol = base + '/' + quote;
             let lot = parseFloat (market['minTrade']);
             let tickSize = parseFloat (market['tickSize']);
@@ -31520,7 +33238,9 @@ module.exports = class binance extends Exchange {
     }
 
     parseTicker (ticker, market) {
-        let timestamp = ticker['closeTime'];
+        let timestamp = this.safeInteger (ticker, 'closeTime');
+        if (typeof timestamp == 'undefined')
+            timestamp = this.milliseconds ();
         let symbol = undefined;
         if (market)
             symbol = market['symbol'];
@@ -31528,20 +33248,20 @@ module.exports = class binance extends Exchange {
             'symbol': symbol,
             'timestamp': timestamp,
             'datetime': this.iso8601 (timestamp),
-            'high': parseFloat (ticker['highPrice']),
-            'low': parseFloat (ticker['lowPrice']),
-            'bid': parseFloat (ticker['bidPrice']),
-            'ask': parseFloat (ticker['askPrice']),
-            'vwap': parseFloat (ticker['weightedAvgPrice']),
-            'open': parseFloat (ticker['openPrice']),
-            'close': parseFloat (ticker['prevClosePrice']),
+            'high': this.safeFloat (ticker, 'highPrice'),
+            'low': this.safeFloat (ticker, 'lowPrice'),
+            'bid': this.safeFloat (ticker, 'bidPrice'),
+            'ask': this.safeFloat (ticker, 'askPrice'),
+            'vwap': this.safeFloat (ticker, 'weightedAvgPrice'),
+            'open': this.safeFloat (ticker, 'openPrice'),
+            'close': this.safeFloat (ticker, 'prevClosePrice'),
             'first': undefined,
-            'last': parseFloat (ticker['lastPrice']),
-            'change': parseFloat (ticker['priceChangePercent']),
+            'last': this.safeFloat (ticker, 'lastPrice'),
+            'change': this.safeFloat (ticker, 'priceChangePercent'),
             'percentage': undefined,
             'average': undefined,
-            'baseVolume': parseFloat (ticker['volume']),
-            'quoteVolume': parseFloat (ticker['quoteVolume']),
+            'baseVolume': this.safeFloat (ticker, 'volume'),
+            'quoteVolume': this.safeFloat (ticker, 'quoteVolume'),
             'info': ticker,
         };
     }
@@ -31553,6 +33273,22 @@ module.exports = class binance extends Exchange {
             'symbol': market['id'],
         }, params));
         return this.parseTicker (response, market);
+    }
+
+    async fetchTickers (symbols = undefined, params = {}) {
+        await this.loadMarkets ();
+        let tickers = await this.publicGetTickerAllBookTickers (params);
+        let result = {};
+        for (let i = 0; i < tickers.length; i++) {
+            let ticker = tickers[i];
+            let id = ticker['symbol'];
+            if (id in this.markets_by_id) {
+                let market = this.markets_by_id[id];
+                let symbol = market['symbol'];
+                result[symbol] = this.parseTicker (ticker, market);
+            }
+        }
+        return result;
     }
 
     parseOHLCV (ohlcv, market = undefined, timeframe = '1m', since = undefined, limit = undefined) {
@@ -31594,17 +33330,15 @@ module.exports = class binance extends Exchange {
         if ('orderId' in trade)
             order = trade['orderId'].toString ();
         if ('m' in trade) {
-            side = 'sell';
-            if (trade['m'])
-                side = 'buy';
+            side = trade['m'] ? 'sell' : 'buy'; // this is reversed intentionally
         } else {
-            side = (trade['isBuyer']) ? 'buy' : 'sell';
+            side = (trade['isBuyer']) ? 'buy' : 'sell'; // this is a true side
         }
         let fee = undefined;
         if ('commission' in trade) {
             fee = {
                 'cost': parseFloat (trade['commission']),
-                'currency': trade['commissionAsset'],
+                'currency': this.commonCurrencyCode (trade['commissionAsset']),
             };
         }
         return {
@@ -31784,9 +33518,21 @@ module.exports = class binance extends Exchange {
         return this.parseTrades (response, market);
     }
 
+    commonCurrencyCode (currency) {
+        if (currency == 'BCC')
+            return 'BCH';
+        return currency;
+    }
+
+    currencyId (currency) {
+        if (currency == 'BCH')
+            return 'BCC';
+        return currency;
+    }
+
     async withdraw (currency, amount, address, params = {}) {
         let response = await this.wapiPostWithdraw (this.extend ({
-            'asset': currency,
+            'asset': this.currencyId (currency),
             'address': address,
             'amount': parseFloat (amount),
             'recvWindow': 10000000,
@@ -31805,6 +33551,7 @@ module.exports = class binance extends Exchange {
         if (api == 'wapi')
             url += '.html';
         if ((api == 'private') || (api == 'wapi')) {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             let query = this.urlencode (this.extend ({ 'timestamp': nonce }, params));
             let signature = undefined;
@@ -32482,6 +34229,7 @@ module.exports = class bter extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             let request = { 'nonce': nonce };
             body = this.urlencode (this.extend (request, query));
@@ -32677,6 +34425,12 @@ module.exports = class ccex extends Exchange {
                     ],
                 },
             },
+            'fees': {
+                'trading': {
+                    'taker': 0.2 / 100,
+                    'maker': 0.2 / 100,
+                },
+            },
         });
     }
 
@@ -32685,6 +34439,8 @@ module.exports = class ccex extends Exchange {
             return 'IoTcoin';
         if (currency == 'BLC')
             return 'Cryptobullcoin';
+        if (currency == 'XID')
+            return 'InternationalDiamond';
         return currency;
     }
 
@@ -32699,13 +34455,13 @@ module.exports = class ccex extends Exchange {
             base = this.commonCurrencyCode (base);
             quote = this.commonCurrencyCode (quote);
             let symbol = base + '/' + quote;
-            result.push ({
+            result.push (this.extend (this.fees['trading'], {
                 'id': id,
                 'symbol': symbol,
                 'base': base,
                 'quote': quote,
                 'info': market,
-            });
+            }));
         }
         return result;
     }
@@ -32851,6 +34607,7 @@ module.exports = class ccex extends Exchange {
     sign (path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined) {
         let url = this.urls['api'][api];
         if (api == 'private') {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             let query = this.keysort (this.extend ({
                 'a': path,
@@ -32877,6 +34634,36 @@ module.exports = class ccex extends Exchange {
             if (response['success'])
                 return response;
         throw new ExchangeError (this.id + ' ' + this.json (response));
+    }
+}
+
+
+/***/ }),
+
+/***/ "YkRq":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+module.exports = class Market {
+
+    constructor (exchange, symbol) {
+        this.exchange = exchange;
+        this.symbol = symbol;
+        this.market = exchange.markets[symbol];
+    }
+
+    amountToPrecision (amount) {
+        return this.exchange.amountToPrecision (this.symbol, amount)
+    }
+
+    createLimitBuyOrder(amount, price) {
+        return this.exchange.createLimitBuyOrder (this.symbol, amount, price)
+    }
+
+    createLimitSellOrder(amount, price) {
+        return this.exchange.createLimitSellOrder (this.symbol, amount, price)
     }
 }
 
@@ -33296,6 +35083,7 @@ module.exports = class btctradeua extends Exchange {
             if (Object.keys (query).length)
                 url += this.implodeParams (path, query);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             body = this.urlencode (this.extend ({
                 'out_order_id': nonce,
@@ -33620,7 +35408,7 @@ module.exports = class liqui extends Exchange {
         return tickers[symbol];
     }
 
-    parseTrade (trade, market) {
+    parseTrade (trade, market = undefined) {
         let timestamp = trade['timestamp'] * 1000;
         let side = trade['type'];
         if (side == 'ask')
@@ -33634,19 +35422,29 @@ module.exports = class liqui extends Exchange {
         if ('trade_id' in trade)
             id = this.safeString (trade, 'trade_id');
         let order = this.safeString (trade, this.getOrderIdKey ());
-        let fee = undefined;
+        if ('pair' in trade) {
+            let marketId = trade['pair'];
+            market = this.markets_by_id[marketId];
+        }
+        let symbol = undefined;
+        if (market)
+            symbol = market['symbol'];
+        let feeSide = (side == 'buy') ? 'base' : 'quote';
         return {
             'id': id,
             'order': order,
             'info': trade,
             'timestamp': timestamp,
             'datetime': this.iso8601 (timestamp),
-            'symbol': market['symbol'],
+            'symbol': symbol,
             'type': 'limit',
             'side': side,
             'price': price,
             'amount': trade['amount'],
-            'fee': fee,
+            'fee': {
+                'cost': undefined,
+                'currency': market[feeSide],
+            },
         };
     }
 
@@ -33913,6 +35711,7 @@ module.exports = class liqui extends Exchange {
         let url = this.urls['api'][api];
         let query = this.omit (params, this.extractParams (path));
         if (api == 'private') {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             body = this.urlencode (this.extend ({
                 'nonce': nonce,
@@ -33987,6 +35786,13 @@ module.exports = class surbitcoin extends foxbit {
     }
 }
 
+
+/***/ }),
+
+/***/ "aFK5":
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = { "default": __webpack_require__("gAsd"), __esModule: true };
 
 /***/ }),
 
@@ -34713,6 +36519,7 @@ module.exports = class okcoinusd extends Exchange {
             url += this.version + '/';
         url += path + this.extension;
         if (api == 'private') {
+            this.checkRequiredCredentials ();
             let query = this.keysort (this.extend ({
                 'api_key': this.apiKey,
             }, params));
@@ -34775,6 +36582,7 @@ module.exports = class bitmex extends Exchange {
                 '1d': '1d',
             },
             'urls': {
+                'test': 'https://testnet.bitmex.com',
                 'logo': 'https://user-images.githubusercontent.com/1294454/27766319-f653c6e6-5ed4-11e7-933d-f0bc3699ae8f.jpg',
                 'api': 'https://www.bitmex.com',
                 'www': 'https://www.bitmex.com',
@@ -34881,17 +36689,40 @@ module.exports = class bitmex extends Exchange {
             let id = market['symbol'];
             let base = market['underlying'];
             let quote = market['quoteCurrency'];
-            let isFuturesContract = id != (base + quote);
+            let type = undefined;
+            let future = false;
+            let prediction = false;
+            let basequote = base + quote;
             base = this.commonCurrencyCode (base);
             quote = this.commonCurrencyCode (quote);
-            let symbol = isFuturesContract ? id : (base + '/' + quote);
+            let swap = (id == basequote);
+            let symbol = id;
+            if (swap) {
+                type = 'swap';
+                symbol = base + '/' + quote;
+            } else if (id.indexOf ('B_') >= 0) {
+                prediction = true;
+                type = 'prediction';
+            } else {
+                future = true;
+                type = 'future';
+            }
+            let maker = market['makerFee'];
+            let taker = market['takerFee'];
             result.push ({
                 'id': id,
                 'symbol': symbol,
                 'base': base,
                 'quote': quote,
-                'info': market,
                 'active': active,
+                'taker': taker,
+                'maker': maker,
+                'type': type,
+                'spot': false,
+                'swap': swap,
+                'future': future,
+                'prediction': prediction,
+                'info': market,
             });
         }
         return result;
@@ -35015,8 +36846,11 @@ module.exports = class bitmex extends Exchange {
             // 'reverse': false, // true == newest first
             // 'endTime': '',    // ending date filter for results
         };
-        if (since)
-            request['startTime'] = since; // starting date filter for results
+        if (since) {
+            let ymdhms = this.YmdHMS (since);
+            let ymdhm = ymdhms.slice (0, 16);
+            request['startTime'] = ymdhm; // starting date filter for results
+        }
         if (limit)
             request['count'] = limit; // default 100
         let response = await this.publicGetTradeBucketed (this.extend (request, params));
@@ -35103,12 +36937,27 @@ module.exports = class bitmex extends Exchange {
         };
     }
 
+    handleErrors (code, reason, url, method, headers, body) {
+        if (code == 400) {
+            if (body[0] == "{") {
+                let response = JSON.parse (body);
+                if ('error' in response) {
+                    if ('message' in response['error']) {
+                        throw new ExchangeError (this.id + ' ' + this.json (response));
+                    }
+                }
+            }
+            throw new ExchangeError (this.id + ' ' + body);
+        }
+    }
+
     sign (path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined) {
         let query = '/api' + '/' + this.version + '/' + path;
         if (Object.keys (params).length)
             query += '?' + this.urlencode (params);
         let url = this.urls['api'] + query;
         if (api == 'private') {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             if (method == 'POST')
                 if (Object.keys (params).length)
@@ -35192,6 +37041,12 @@ module.exports = class bxinth extends Exchange {
                         'withdrawal',
                         'withdrawal-history',
                     ],
+                },
+            },
+            'fees': {
+                'trading': {
+                    'taker': 0.25 / 100,
+                    'maker': 0.25 / 100,
                 },
             },
         });
@@ -35278,8 +37133,8 @@ module.exports = class bxinth extends Exchange {
             'change': parseFloat (ticker['change']),
             'percentage': undefined,
             'average': undefined,
-            'baseVolume': undefined,
-            'quoteVolume': parseFloat (ticker['volume_24hours']),
+            'baseVolume': parseFloat (ticker['volume_24hours']),
+            'quoteVolume': undefined,
             'info': ticker,
         };
     }
@@ -35365,6 +37220,7 @@ module.exports = class bxinth extends Exchange {
         if (Object.keys (params).length)
             url += '?' + this.urlencode (params);
         if (api == 'private') {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             let auth = this.apiKey + nonce.toString () + this.secret;
             let signature = this.hash (this.encode (auth), 'sha256');
@@ -35597,11 +37453,15 @@ module.exports = class livecoin extends Exchange {
             let id = market['symbol'];
             let symbol = id;
             let [ base, quote ] = symbol.split ('/');
+            let taker = 0.18 / 100;
+            let maker = 0.18 / 100;
             result.push ({
                 'id': id,
                 'symbol': symbol,
                 'base': base,
                 'quote': quote,
+                'maker': maker,
+                'taker': taker,
                 'info': market,
             });
         }
@@ -35755,6 +37615,7 @@ module.exports = class livecoin extends Exchange {
             }
         }
         if (api == 'private') {
+            this.checkRequiredCredentials ();
             if (method == 'POST')
                 body = query;
             let signature = this.hmac (this.encode (query), this.encode (this.secret), 'sha256');
@@ -36185,6 +38046,7 @@ module.exports = class huobi extends Exchange {
     sign (path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined) {
         let url = this.urls['api'];
         if (api == 'trade') {
+            this.checkRequiredCredentials ();
             url += '/api' + this.version;
             let query = this.keysort (this.extend ({
                 'method': path,
@@ -36228,14 +38090,13 @@ module.exports = class huobi extends Exchange {
 "use strict";
 
 
-//  ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
-const Exchange = __webpack_require__ ("PJ5r")
-const { ExchangeError } = __webpack_require__ ("AnAA")
+const zb = __webpack_require__ ("8XlC")
 
-//  ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
-module.exports = class chbtc extends Exchange {
+module.exports = class chbtc extends zb {
 
     describe () {
         return this.deepExtend (super.describe (), {
@@ -36255,201 +38116,25 @@ module.exports = class chbtc extends Exchange {
                 'www': 'https://trade.chbtc.com/api',
                 'doc': 'https://www.chbtc.com/i/developer',
             },
-            'api': {
-                'public': {
-                    'get': [
-                        'ticker',
-                        'depth',
-                        'trades',
-                        'kline',
-                    ],
-                },
-                'private': {
-                    'post': [
-                        'order',
-                        'cancelOrder',
-                        'getOrder',
-                        'getOrders',
-                        'getOrdersNew',
-                        'getOrdersIgnoreTradeType',
-                        'getUnfinishedOrdersIgnoreTradeType',
-                        'getAccountInfo',
-                        'getUserAddress',
-                        'getWithdrawAddress',
-                        'getWithdrawRecord',
-                        'getChargeRecord',
-                        'getCnyWithdrawRecord',
-                        'getCnyChargeRecord',
-                        'withdraw',
-                    ],
-                },
-            },
-            'markets': {
-                'BTC/CNY': { 'id': 'btc_cny', 'symbol': 'BTC/CNY', 'base': 'BTC', 'quote': 'CNY' },
-                'LTC/CNY': { 'id': 'ltc_cny', 'symbol': 'LTC/CNY', 'base': 'LTC', 'quote': 'CNY' },
-                'ETH/CNY': { 'id': 'eth_cny', 'symbol': 'ETH/CNY', 'base': 'ETH', 'quote': 'CNY' },
-                'ETC/CNY': { 'id': 'etc_cny', 'symbol': 'ETC/CNY', 'base': 'ETC', 'quote': 'CNY' },
-                'BTS/CNY': { 'id': 'bts_cny', 'symbol': 'BTS/CNY', 'base': 'BTS', 'quote': 'CNY' },
-                // 'EOS/CNY': { 'id': 'eos_cny', 'symbol': 'EOS/CNY', 'base': 'EOS', 'quote': 'CNY' },
-                'BCH/CNY': { 'id': 'bcc_cny', 'symbol': 'BCH/CNY', 'base': 'BCH', 'quote': 'CNY' },
-                'HSR/CNY': { 'id': 'hsr_cny', 'symbol': 'HSR/CNY', 'base': 'HSR', 'quote': 'CNY' },
-                'QTUM/CNY': { 'id': 'qtum_cny', 'symbol': 'QTUM/CNY', 'base': 'QTUM', 'quote': 'CNY' },
-            },
         });
     }
 
-    async fetchBalance (params = {}) {
-        let response = await this.privatePostGetAccountInfo ();
-        let balances = response['result'];
-        let result = { 'info': balances };
-        for (let c = 0; c < this.currencies.length; c++) {
-            let currency = this.currencies[c];
-            let account = this.account ();
-            if (currency in balances['balance'])
-                account['free'] = parseFloat (balances['balance'][currency]['amount']);
-            if (currency in balances['frozen'])
-                account['used'] = parseFloat (balances['frozen'][currency]['amount']);
-            account['total'] = this.sum (account['free'], account['used']);
-            result[currency] = account;
-        }
-        return this.parseBalance (result);
+    getMarketFieldName () {
+        return 'currency';
     }
 
-    async fetchOrderBook (symbol, params = {}) {
-        let market = this.market (symbol);
-        let orderbook = await this.publicGetDepth (this.extend ({
-            'currency': market['id'],
-        }, params));
-        let timestamp = this.milliseconds ();
-        let bids = undefined;
-        let asks = undefined;
-        if ('bids' in orderbook)
-            bids = orderbook['bids'];
-        if ('asks' in orderbook)
-            asks = orderbook['asks'];
-        let result = {
-            'bids': bids,
-            'asks': asks,
-            'timestamp': timestamp,
-            'datetime': this.iso8601 (timestamp),
-        };
-        if (result['bids'])
-            result['bids'] = this.sortBy (result['bids'], 0, true);
-        if (result['asks'])
-            result['asks'] = this.sortBy (result['asks'], 0);
-        return result;
-    }
-
-    async fetchTicker (symbol, params = {}) {
-        let response = await this.publicGetTicker (this.extend ({
-            'currency': this.marketId (symbol),
-        }, params));
-        let ticker = response['ticker'];
-        let timestamp = this.milliseconds ();
+    async fetchMarkets () {
         return {
-            'symbol': symbol,
-            'timestamp': timestamp,
-            'datetime': this.iso8601 (timestamp),
-            'high': parseFloat (ticker['high']),
-            'low': parseFloat (ticker['low']),
-            'bid': parseFloat (ticker['buy']),
-            'ask': parseFloat (ticker['sell']),
-            'vwap': undefined,
-            'open': undefined,
-            'close': undefined,
-            'first': undefined,
-            'last': parseFloat (ticker['last']),
-            'change': undefined,
-            'percentage': undefined,
-            'average': undefined,
-            'baseVolume': undefined,
-            'quoteVolume': parseFloat (ticker['vol']),
-            'info': ticker,
+            'BTC/CNY': { 'id': 'btc_cny', 'symbol': 'BTC/CNY', 'base': 'BTC', 'quote': 'CNY' },
+            'LTC/CNY': { 'id': 'ltc_cny', 'symbol': 'LTC/CNY', 'base': 'LTC', 'quote': 'CNY' },
+            'ETH/CNY': { 'id': 'eth_cny', 'symbol': 'ETH/CNY', 'base': 'ETH', 'quote': 'CNY' },
+            'ETC/CNY': { 'id': 'etc_cny', 'symbol': 'ETC/CNY', 'base': 'ETC', 'quote': 'CNY' },
+            'BTS/CNY': { 'id': 'bts_cny', 'symbol': 'BTS/CNY', 'base': 'BTS', 'quote': 'CNY' },
+            // 'EOS/CNY': { 'id': 'eos_cny', 'symbol': 'EOS/CNY', 'base': 'EOS', 'quote': 'CNY' },
+            'BCH/CNY': { 'id': 'bcc_cny', 'symbol': 'BCH/CNY', 'base': 'BCH', 'quote': 'CNY' },
+            'HSR/CNY': { 'id': 'hsr_cny', 'symbol': 'HSR/CNY', 'base': 'HSR', 'quote': 'CNY' },
+            'QTUM/CNY': { 'id': 'qtum_cny', 'symbol': 'QTUM/CNY', 'base': 'QTUM', 'quote': 'CNY' },
         };
-    }
-
-    parseTrade (trade, market = undefined) {
-        let timestamp = trade['date'] * 1000;
-        let side = (trade['trade_type'] == 'bid') ? 'buy' : 'sell';
-        return {
-            'info': trade,
-            'id': trade['tid'].toString (),
-            'timestamp': timestamp,
-            'datetime': this.iso8601 (timestamp),
-            'symbol': market['symbol'],
-            'type': undefined,
-            'side': side,
-            'price': trade['price'],
-            'amount': trade['amount'],
-        };
-    }
-
-    async fetchTrades (symbol, since = undefined, limit = undefined, params = {}) {
-        await this.loadMarkets ();
-        let market = this.market (symbol);
-        let response = await this.publicGetTrades (this.extend ({
-            'currency': market['id'],
-        }, params));
-        return this.parseTrades (response, market);
-    }
-
-    async createOrder (symbol, type, side, amount, price = undefined, params = {}) {
-        let paramString = '&price=' + price.toString ();
-        paramString += '&amount=' + amount.toString ();
-        let tradeType = (side == 'buy') ? '1' : '0';
-        paramString += '&tradeType=' + tradeType;
-        paramString += '&currency=' + this.marketId (symbol);
-        let response = await this.privatePostOrder (paramString);
-        return {
-            'info': response,
-            'id': response['id'],
-        };
-    }
-
-    async cancelOrder (id, symbol = undefined, params = {}) {
-        let paramString = '&id=' + id.toString ();
-        if ('currency' in params)
-            paramString += '&currency=' + params['currency'];
-        return await this.privatePostCancelOrder (paramString);
-    }
-
-    async fetchOrder (id, symbol = undefined, params = {}) {
-        let paramString = '&id=' + id.toString ();
-        if ('currency' in params)
-            paramString += '&currency=' + params['currency'];
-        return await this.privatePostGetOrder (paramString);
-    }
-
-    nonce () {
-        return this.milliseconds ();
-    }
-
-    sign (path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined) {
-        let url = this.urls['api'][api];
-        if (api == 'public') {
-            url += '/' + this.version + '/' + path;
-            if (Object.keys (params).length)
-                url += '?' + this.urlencode (params);
-        } else {
-            let paramsLength = params.length; // params should be a string here
-            let nonce = this.nonce ();
-            let auth = 'method=' + path;
-            auth += '&accesskey=' + this.apiKey;
-            auth += paramsLength ? params : '';
-            let secret = this.hash (this.encode (this.secret), 'sha1');
-            let signature = this.hmac (this.encode (auth), this.encode (secret), 'md5');
-            let suffix = 'sign=' + signature + '&reqTime=' + nonce.toString ();
-            url += '/' + path + '?' + auth + '&' + suffix;
-        }
-        return { 'url': url, 'method': method, 'body': body, 'headers': headers };
-    }
-
-    async request (path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined) {
-        let response = await this.fetch2 (path, api, method, params, headers, body);
-        if (api == 'private')
-            if ('code' in response)
-                throw new ExchangeError (this.id + ' ' + this.json (response));
-        return response;
     }
 }
 
@@ -36541,11 +38226,17 @@ module.exports = class qryptos extends Exchange {
             let base = market['base_currency'];
             let quote = market['quoted_currency'];
             let symbol = base + '/' + quote;
+            let maker = market['maker_fee'];
+            let taker = market['taker_fee'];
+            let active = !market['disabled'];
             result.push ({
                 'id': id,
                 'symbol': symbol,
                 'base': base,
                 'quote': quote,
+                'maker': maker,
+                'taker': taker,
+                'active': active,
                 'info': market,
             });
         }
@@ -36699,6 +38390,7 @@ module.exports = class qryptos extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             let request = {
                 'path': url,
@@ -36904,6 +38596,8 @@ module.exports = class huobipro extends Exchange {
                 'price': market['price-precision'],
             };
             let lot = Math.pow (10, -precision['amount']);
+            let maker = (base == 'OMG') ? 0 : 0.2 / 100;
+            let taker = (base == 'OMG') ? 0 : 0.2 / 100;
             result.push ({
                 'id': id,
                 'symbol': symbol,
@@ -36911,6 +38605,8 @@ module.exports = class huobipro extends Exchange {
                 'quote': quote,
                 'lot': lot,
                 'precision': precision,
+                'taker': taker,
+                'maker': maker,
                 'limits': {
                     'amount': {
                         'min': lot,
@@ -37130,6 +38826,7 @@ module.exports = class huobipro extends Exchange {
         url += '/' + this.implodeParams (path, params);
         let query = this.omit (params, this.extractParams (path));
         if (api == 'private') {
+            this.checkRequiredCredentials ();
             let timestamp = this.YmdHMS (this.milliseconds (), 'T');
             let request = this.keysort (this.extend ({
                 'SignatureMethod': 'HmacSHA256',
@@ -38229,6 +39926,42 @@ module.exports = class kuna extends acx {
         }, params));
         return this.parseTrades (response, market);
     }
+
+    parseMyTrade (trade, market) {
+        let timestamp = this.parse8601 (trade['created_at']);
+        let symbol = undefined;
+        if (market)
+            symbol = market['symbol'];
+        return {
+            'id': trade['id'],
+            'timestamp': timestamp,
+            'datetime': this.iso8601 (timestamp),
+            'price': trade['price'],
+            'amount': trade['volume'],
+            'cost': trade['funds'],
+            'symbol': symbol,
+            'side': trade['side'],
+            'order': trade['order_id'],
+        };
+    }
+
+    parseMyTrades (trades, market = undefined) {
+        let parsedTrades = [];
+        for (let i = 0; i < trades.length; i++) {
+            let trade = trades[i];
+            let parsedTrade = this.parseMyTrade (trade, market);
+            parsedTrades.push(parsedTrade);
+        }
+        return parsedTrades;
+    }
+
+    async fetchMyTrades (symbol) {
+        if (!symbol)
+            throw new ExchangeError (this.id + ' fetchOpenOrders requires a symbol argument');
+        let market = this.market (symbol);
+        let response = await this.privateGetTradesMy ({ 'market': market['id'] });
+        return this.parseMyTrades (response, market);
+    }
 }
 
 
@@ -38272,6 +40005,18 @@ module.exports = __webpack_require__("FeBl").getIterator = function (it) {
 
 /***/ }),
 
+/***/ "gAsd":
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__("G5/o");
+var $Object = __webpack_require__("FeBl").Object;
+module.exports = function getOwnPropertyNames(it) {
+  return $Object.getOwnPropertyNames(it);
+};
+
+
+/***/ }),
+
 /***/ "gR8P":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -38302,6 +40047,11 @@ module.exports = class coinfloor extends Exchange {
                     'https://github.com/coinfloor/api',
                     'https://www.coinfloor.co.uk/api',
                 ],
+            },
+            'requiredCredentials': {
+                'apiKey': true,
+                'secret': true,
+                'uid': true,
             },
             'api': {
                 'public': {
@@ -38445,6 +40195,7 @@ module.exports = class coinfloor extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             body = this.urlencode (this.extend ({ 'nonce': nonce }, query));
             let auth = this.uid + '/' + this.apiKey + ':' + this.password;
@@ -38581,6 +40332,12 @@ module.exports = class itbit extends Exchange {
                 'BTC/SGD': { 'id': 'XBTSGD', 'symbol': 'BTC/SGD', 'base': 'BTC', 'quote': 'SGD' },
                 'BTC/EUR': { 'id': 'XBTEUR', 'symbol': 'BTC/EUR', 'base': 'BTC', 'quote': 'EUR' },
             },
+            'fees': {
+                'trading': {
+                    'maker': 0,
+                    'taker': 0.2 / 100,
+                },
+            },
         });
     }
 
@@ -38716,6 +40473,7 @@ module.exports = class itbit extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             if (Object.keys (query).length)
                 body = this.json (query);
             else
@@ -39618,6 +41376,11 @@ module.exports = class gdax extends Exchange {
                 'www': 'https://www.gdax.com',
                 'doc': 'https://docs.gdax.com',
             },
+            'requiredCredentials': {
+                'apiKey': true,
+                'secret': true,
+                'password': true,
+            },
             'api': {
                 'public': {
                     'get': [
@@ -40028,15 +41791,10 @@ module.exports = class gdax extends Exchange {
         }
         let url = this.urls['api'] + request;
         if (api == 'private') {
-            if (!this.apiKey)
-                throw new AuthenticationError (this.id + ' requires apiKey property for authentication and trading');
-            if (!this.secret)
-                throw new AuthenticationError (this.id + ' requires secret property for authentication and trading');
-            if (!this.password)
-                throw new AuthenticationError (this.id + ' requires password property for authentication and trading');
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             let payload = '';
-            if (method == 'POST') {
+            if (method != 'GET') {
                 if (Object.keys (query).length)
                     body = this.json (query);
                     payload = body;
@@ -40061,7 +41819,9 @@ module.exports = class gdax extends Exchange {
             if (body[0] == "{") {
                 let response = JSON.parse (body);
                 let message = response['message'];
-                if (message.indexOf ('price too precise') >= 0) {
+                if (message.indexOf ('price too small') >= 0) {
+                    throw new InvalidOrder (this.id + ' ' + message);
+                } else if (message.indexOf ('price too precise') >= 0) {
                     throw new InvalidOrder (this.id + ' ' + message);
                 } else if (message == 'Invalid API Key') {
                     throw new AuthenticationError (this.id + ' ' + message);
@@ -40158,6 +41918,12 @@ module.exports = class bithumb extends Exchange {
                 'DASH/KRW': { 'id': 'DASH', 'symbol': 'DASH/KRW', 'base': 'DASH', 'quote': 'KRW' },
                 'QTUM/KRW': { 'id': 'QTUM', 'symbol': 'QTUM/KRW', 'base': 'QTUM', 'quote': 'KRW' },
             },
+            'fees': {
+                'trading': {
+                    'maker': 0.15 / 100,
+                    'taker': 0.15 / 100,
+                },
+            },
         });
     }
 
@@ -40212,8 +41978,8 @@ module.exports = class bithumb extends Exchange {
             'change': undefined,
             'percentage': undefined,
             'average': this.safeFloat (ticker, 'average_price'),
-            'baseVolume': undefined,
-            'quoteVolume': this.safeFloat (ticker, 'volume_1day'),
+            'baseVolume': this.safeFloat (ticker, 'volume_1day'),
+            'quoteVolume': undefined,
             'info': ticker,
         };
     }
@@ -40319,6 +42085,7 @@ module.exports = class bithumb extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             body = this.urlencode (this.extend ({
                 'endpoint': endpoint,
             }, query));
@@ -40327,7 +42094,7 @@ module.exports = class bithumb extends Exchange {
             let signature = this.hmac (this.encode (auth), this.encode (this.secret), 'sha512');
             headers = {
                 'Api-Key': this.apiKey,
-                'Api-Sign': this.stringToBase64 (this.encode (signature)),
+                'Api-Sign': this.decode (this.stringToBase64 (this.encode (signature))),
                 'Api-Nonce': nonce,
             };
         }
@@ -40344,6 +42111,7 @@ module.exports = class bithumb extends Exchange {
         return response;
     }
 }
+
 
 /***/ }),
 
@@ -40684,10 +42452,7 @@ module.exports = class btcchina extends Exchange {
     sign (path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined) {
         let url = this.urls['api'][api] + '/' + path;
         if (api == 'private') {
-            if (!this.apiKey)
-                throw new AuthenticationError (this.id + ' requires `' + this.id + '.apiKey` property for authentication');
-            if (!this.secret)
-                throw new AuthenticationError (this.id + ' requires `' + this.id + '.secret` property for authentication');
+            this.checkRequiredCredentials ();
             let p = [];
             if ('params' in params)
                 p = params['params'];
@@ -41043,10 +42808,12 @@ module.exports = class exmo extends Exchange {
         let prefix = '';
         if (type == 'market')
             prefix = 'market_';
+        if (typeof price == 'undefined')
+            price = 0;
         let order = {
             'pair': this.marketId (symbol),
             'quantity': amount,
-            'price': price || 0,
+            'price': price,
             'type': prefix + side,
         };
         let response = await this.privatePostOrderCreate (this.extend (order, params));
@@ -41080,6 +42847,7 @@ module.exports = class exmo extends Exchange {
             if (Object.keys (params).length)
                 url += '?' + this.urlencode (params);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             body = this.urlencode (this.extend ({ 'nonce': nonce }, params));
             headers = {
@@ -41166,6 +42934,513 @@ module.exports = class exmo extends Exchange {
 	return CryptoJS.mode.CTR;
 
 }));
+
+/***/ }),
+
+/***/ "kYgY":
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;(function (self) {
+  'use strict';
+
+  function fetchPonyfill(options) {
+    var Promise = options && options.Promise || self.Promise;
+    var XMLHttpRequest = options && options.XMLHttpRequest || self.XMLHttpRequest;
+    var global = self;
+
+    return (function () {
+      var self = Object.create(global, {
+        fetch: {
+          value: undefined,
+          writable: true
+        }
+      });
+
+      (function(self) {
+        'use strict';
+
+        if (self.fetch) {
+          return
+        }
+
+        var support = {
+          searchParams: 'URLSearchParams' in self,
+          iterable: 'Symbol' in self && 'iterator' in Symbol,
+          blob: 'FileReader' in self && 'Blob' in self && (function() {
+            try {
+              new Blob()
+              return true
+            } catch(e) {
+              return false
+            }
+          })(),
+          formData: 'FormData' in self,
+          arrayBuffer: 'ArrayBuffer' in self
+        }
+
+        if (support.arrayBuffer) {
+          var viewClasses = [
+            '[object Int8Array]',
+            '[object Uint8Array]',
+            '[object Uint8ClampedArray]',
+            '[object Int16Array]',
+            '[object Uint16Array]',
+            '[object Int32Array]',
+            '[object Uint32Array]',
+            '[object Float32Array]',
+            '[object Float64Array]'
+          ]
+
+          var isDataView = function(obj) {
+            return obj && DataView.prototype.isPrototypeOf(obj)
+          }
+
+          var isArrayBufferView = ArrayBuffer.isView || function(obj) {
+            return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1
+          }
+        }
+
+        function normalizeName(name) {
+          if (typeof name !== 'string') {
+            name = String(name)
+          }
+          if (/[^a-z0-9\-#$%&'*+.\^_`|~]/i.test(name)) {
+            throw new TypeError('Invalid character in header field name')
+          }
+          return name.toLowerCase()
+        }
+
+        function normalizeValue(value) {
+          if (typeof value !== 'string') {
+            value = String(value)
+          }
+          return value
+        }
+
+        // Build a destructive iterator for the value list
+        function iteratorFor(items) {
+          var iterator = {
+            next: function() {
+              var value = items.shift()
+              return {done: value === undefined, value: value}
+            }
+          }
+
+          if (support.iterable) {
+            iterator[Symbol.iterator] = function() {
+              return iterator
+            }
+          }
+
+          return iterator
+        }
+
+        function Headers(headers) {
+          this.map = {}
+
+          if (headers instanceof Headers) {
+            headers.forEach(function(value, name) {
+              this.append(name, value)
+            }, this)
+          } else if (Array.isArray(headers)) {
+            headers.forEach(function(header) {
+              this.append(header[0], header[1])
+            }, this)
+          } else if (headers) {
+            Object.getOwnPropertyNames(headers).forEach(function(name) {
+              this.append(name, headers[name])
+            }, this)
+          }
+        }
+
+        Headers.prototype.append = function(name, value) {
+          name = normalizeName(name)
+          value = normalizeValue(value)
+          var oldValue = this.map[name]
+          this.map[name] = oldValue ? oldValue+','+value : value
+        }
+
+        Headers.prototype['delete'] = function(name) {
+          delete this.map[normalizeName(name)]
+        }
+
+        Headers.prototype.get = function(name) {
+          name = normalizeName(name)
+          return this.has(name) ? this.map[name] : null
+        }
+
+        Headers.prototype.has = function(name) {
+          return this.map.hasOwnProperty(normalizeName(name))
+        }
+
+        Headers.prototype.set = function(name, value) {
+          this.map[normalizeName(name)] = normalizeValue(value)
+        }
+
+        Headers.prototype.forEach = function(callback, thisArg) {
+          for (var name in this.map) {
+            if (this.map.hasOwnProperty(name)) {
+              callback.call(thisArg, this.map[name], name, this)
+            }
+          }
+        }
+
+        Headers.prototype.keys = function() {
+          var items = []
+          this.forEach(function(value, name) { items.push(name) })
+          return iteratorFor(items)
+        }
+
+        Headers.prototype.values = function() {
+          var items = []
+          this.forEach(function(value) { items.push(value) })
+          return iteratorFor(items)
+        }
+
+        Headers.prototype.entries = function() {
+          var items = []
+          this.forEach(function(value, name) { items.push([name, value]) })
+          return iteratorFor(items)
+        }
+
+        if (support.iterable) {
+          Headers.prototype[Symbol.iterator] = Headers.prototype.entries
+        }
+
+        function consumed(body) {
+          if (body.bodyUsed) {
+            return Promise.reject(new TypeError('Already read'))
+          }
+          body.bodyUsed = true
+        }
+
+        function fileReaderReady(reader) {
+          return new Promise(function(resolve, reject) {
+            reader.onload = function() {
+              resolve(reader.result)
+            }
+            reader.onerror = function() {
+              reject(reader.error)
+            }
+          })
+        }
+
+        function readBlobAsArrayBuffer(blob) {
+          var reader = new FileReader()
+          var promise = fileReaderReady(reader)
+          reader.readAsArrayBuffer(blob)
+          return promise
+        }
+
+        function readBlobAsText(blob) {
+          var reader = new FileReader()
+          var promise = fileReaderReady(reader)
+          reader.readAsText(blob)
+          return promise
+        }
+
+        function readArrayBufferAsText(buf) {
+          var view = new Uint8Array(buf)
+          var chars = new Array(view.length)
+
+          for (var i = 0; i < view.length; i++) {
+            chars[i] = String.fromCharCode(view[i])
+          }
+          return chars.join('')
+        }
+
+        function bufferClone(buf) {
+          if (buf.slice) {
+            return buf.slice(0)
+          } else {
+            var view = new Uint8Array(buf.byteLength)
+            view.set(new Uint8Array(buf))
+            return view.buffer
+          }
+        }
+
+        function Body() {
+          this.bodyUsed = false
+
+          this._initBody = function(body) {
+            this._bodyInit = body
+            if (!body) {
+              this._bodyText = ''
+            } else if (typeof body === 'string') {
+              this._bodyText = body
+            } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
+              this._bodyBlob = body
+            } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
+              this._bodyFormData = body
+            } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
+              this._bodyText = body.toString()
+            } else if (support.arrayBuffer && support.blob && isDataView(body)) {
+              this._bodyArrayBuffer = bufferClone(body.buffer)
+              // IE 10-11 can't handle a DataView body.
+              this._bodyInit = new Blob([this._bodyArrayBuffer])
+            } else if (support.arrayBuffer && (ArrayBuffer.prototype.isPrototypeOf(body) || isArrayBufferView(body))) {
+              this._bodyArrayBuffer = bufferClone(body)
+            } else {
+              throw new Error('unsupported BodyInit type')
+            }
+
+            if (!this.headers.get('content-type')) {
+              if (typeof body === 'string') {
+                this.headers.set('content-type', 'text/plain;charset=UTF-8')
+              } else if (this._bodyBlob && this._bodyBlob.type) {
+                this.headers.set('content-type', this._bodyBlob.type)
+              } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
+                this.headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8')
+              }
+            }
+          }
+
+          if (support.blob) {
+            this.blob = function() {
+              var rejected = consumed(this)
+              if (rejected) {
+                return rejected
+              }
+
+              if (this._bodyBlob) {
+                return Promise.resolve(this._bodyBlob)
+              } else if (this._bodyArrayBuffer) {
+                return Promise.resolve(new Blob([this._bodyArrayBuffer]))
+              } else if (this._bodyFormData) {
+                throw new Error('could not read FormData body as blob')
+              } else {
+                return Promise.resolve(new Blob([this._bodyText]))
+              }
+            }
+
+            this.arrayBuffer = function() {
+              if (this._bodyArrayBuffer) {
+                return consumed(this) || Promise.resolve(this._bodyArrayBuffer)
+              } else {
+                return this.blob().then(readBlobAsArrayBuffer)
+              }
+            }
+          }
+
+          this.text = function() {
+            var rejected = consumed(this)
+            if (rejected) {
+              return rejected
+            }
+
+            if (this._bodyBlob) {
+              return readBlobAsText(this._bodyBlob)
+            } else if (this._bodyArrayBuffer) {
+              return Promise.resolve(readArrayBufferAsText(this._bodyArrayBuffer))
+            } else if (this._bodyFormData) {
+              throw new Error('could not read FormData body as text')
+            } else {
+              return Promise.resolve(this._bodyText)
+            }
+          }
+
+          if (support.formData) {
+            this.formData = function() {
+              return this.text().then(decode)
+            }
+          }
+
+          this.json = function() {
+            return this.text().then(JSON.parse)
+          }
+
+          return this
+        }
+
+        // HTTP methods whose capitalization should be normalized
+        var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT']
+
+        function normalizeMethod(method) {
+          var upcased = method.toUpperCase()
+          return (methods.indexOf(upcased) > -1) ? upcased : method
+        }
+
+        function Request(input, options) {
+          options = options || {}
+          var body = options.body
+
+          if (input instanceof Request) {
+            if (input.bodyUsed) {
+              throw new TypeError('Already read')
+            }
+            this.url = input.url
+            this.credentials = input.credentials
+            if (!options.headers) {
+              this.headers = new Headers(input.headers)
+            }
+            this.method = input.method
+            this.mode = input.mode
+            if (!body && input._bodyInit != null) {
+              body = input._bodyInit
+              input.bodyUsed = true
+            }
+          } else {
+            this.url = String(input)
+          }
+
+          this.credentials = options.credentials || this.credentials || 'omit'
+          if (options.headers || !this.headers) {
+            this.headers = new Headers(options.headers)
+          }
+          this.method = normalizeMethod(options.method || this.method || 'GET')
+          this.mode = options.mode || this.mode || null
+          this.referrer = null
+
+          if ((this.method === 'GET' || this.method === 'HEAD') && body) {
+            throw new TypeError('Body not allowed for GET or HEAD requests')
+          }
+          this._initBody(body)
+        }
+
+        Request.prototype.clone = function() {
+          return new Request(this, { body: this._bodyInit })
+        }
+
+        function decode(body) {
+          var form = new FormData()
+          body.trim().split('&').forEach(function(bytes) {
+            if (bytes) {
+              var split = bytes.split('=')
+              var name = split.shift().replace(/\+/g, ' ')
+              var value = split.join('=').replace(/\+/g, ' ')
+              form.append(decodeURIComponent(name), decodeURIComponent(value))
+            }
+          })
+          return form
+        }
+
+        function parseHeaders(rawHeaders) {
+          var headers = new Headers()
+          rawHeaders.split(/\r?\n/).forEach(function(line) {
+            var parts = line.split(':')
+            var key = parts.shift().trim()
+            if (key) {
+              var value = parts.join(':').trim()
+              headers.append(key, value)
+            }
+          })
+          return headers
+        }
+
+        Body.call(Request.prototype)
+
+        function Response(bodyInit, options) {
+          if (!options) {
+            options = {}
+          }
+
+          this.type = 'default'
+          this.status = 'status' in options ? options.status : 200
+          this.ok = this.status >= 200 && this.status < 300
+          this.statusText = 'statusText' in options ? options.statusText : 'OK'
+          this.headers = new Headers(options.headers)
+          this.url = options.url || ''
+          this._initBody(bodyInit)
+        }
+
+        Body.call(Response.prototype)
+
+        Response.prototype.clone = function() {
+          return new Response(this._bodyInit, {
+            status: this.status,
+            statusText: this.statusText,
+            headers: new Headers(this.headers),
+            url: this.url
+          })
+        }
+
+        Response.error = function() {
+          var response = new Response(null, {status: 0, statusText: ''})
+          response.type = 'error'
+          return response
+        }
+
+        var redirectStatuses = [301, 302, 303, 307, 308]
+
+        Response.redirect = function(url, status) {
+          if (redirectStatuses.indexOf(status) === -1) {
+            throw new RangeError('Invalid status code')
+          }
+
+          return new Response(null, {status: status, headers: {location: url}})
+        }
+
+        self.Headers = Headers
+        self.Request = Request
+        self.Response = Response
+
+        self.fetch = function(input, init) {
+          return new Promise(function(resolve, reject) {
+            var request = new Request(input, init)
+            var xhr = new XMLHttpRequest()
+
+            xhr.onload = function() {
+              var options = {
+                status: xhr.status,
+                statusText: xhr.statusText,
+                headers: parseHeaders(xhr.getAllResponseHeaders() || '')
+              }
+              options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL')
+              var body = 'response' in xhr ? xhr.response : xhr.responseText
+              resolve(new Response(body, options))
+            }
+
+            xhr.onerror = function() {
+              reject(new TypeError('Network request failed'))
+            }
+
+            xhr.ontimeout = function() {
+              reject(new TypeError('Network request failed'))
+            }
+
+            xhr.open(request.method, request.url, true)
+
+            if (request.credentials === 'include') {
+              xhr.withCredentials = true
+            }
+
+            if ('responseType' in xhr && support.blob) {
+              xhr.responseType = 'blob'
+            }
+
+            request.headers.forEach(function(value, name) {
+              xhr.setRequestHeader(name, value)
+            })
+
+            xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit)
+          })
+        }
+        self.fetch.polyfill = true
+      })(typeof self !== 'undefined' ? self : this);
+
+
+      return {
+        fetch: self.fetch,
+        Headers: self.Headers,
+        Request: self.Request,
+        Response: self.Response
+      };
+    }());
+  }
+
+  if (true) {
+    !(__WEBPACK_AMD_DEFINE_RESULT__ = function () {
+      return fetchPonyfill;
+    }.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+  } else if (typeof exports === 'object') {
+    module.exports = fetchPonyfill;
+  } else {
+    self.fetchPonyfill = fetchPonyfill;
+  }
+}(typeof self === 'undefined' ? this : self));
+
+
 
 /***/ }),
 
@@ -41327,6 +43602,33 @@ module.exports = class dsx extends liqui {
             result[uppercase] = account;
         }
         return this.parseBalance (result);
+    }
+
+    parseTicker (ticker, market = undefined) {
+        let timestamp = ticker['updated'] * 1000;
+        let symbol = undefined;
+        if (market)
+            symbol = market['symbol'];
+        return {
+            'symbol': symbol,
+            'timestamp': timestamp,
+            'datetime': this.iso8601 (timestamp),
+            'high': this.safeFloat (ticker, 'high'),
+            'low': this.safeFloat (ticker, 'low'),
+            'bid': this.safeFloat (ticker, 'buy'),
+            'ask': this.safeFloat (ticker, 'sell'),
+            'vwap': undefined,
+            'open': undefined,
+            'close': undefined,
+            'first': undefined,
+            'last': this.safeFloat (ticker, 'last'),
+            'change': undefined,
+            'percentage': undefined,
+            'average': 1 / this.safeFloat (ticker, 'avg'),
+            'baseVolume': this.safeFloat (ticker, 'vol'),
+            'quoteVolume': this.safeFloat (ticker, 'vol_cur'),
+            'info': ticker,
+        };
     }
 
     getOrderIdKey () {
@@ -41585,6 +43887,10 @@ module.exports = class coinmarketcap extends Exchange {
                 'api': 'https://api.coinmarketcap.com',
                 'www': 'https://coinmarketcap.com',
                 'doc': 'https://coinmarketcap.com/api',
+            },
+            'requiredCredentials': {
+                'apiKey': false,
+                'secret': false,
             },
             'api': {
                 'public': {
@@ -42002,6 +44308,20 @@ module.exports = {
 
 /***/ }),
 
+/***/ "n0T6":
+/***/ (function(module, exports, __webpack_require__) {
+
+// 19.1.2.7 / 15.2.3.4 Object.getOwnPropertyNames(O)
+var $keys = __webpack_require__("Ibhu");
+var hiddenKeys = __webpack_require__("xnc9").concat('length', 'prototype');
+
+exports.f = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
+  return $keys(O, hiddenKeys);
+};
+
+
+/***/ }),
+
 /***/ "o8dy":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -42213,9 +44533,9 @@ module.exports = class poloniex extends Exchange {
 
     async fetchBalance (params = {}) {
         await this.loadMarkets ();
-        let balances = await this.privatePostReturnCompleteBalances ({
+        let balances = await this.privatePostReturnCompleteBalances (this.extend ({
             'account': 'all',
-        });
+        }, params));
         let result = { 'info': balances };
         let currencies = Object.keys (balances);
         for (let c = 0; c < currencies.length; c++) {
@@ -42309,6 +44629,15 @@ module.exports = class poloniex extends Exchange {
             market = this.markets_by_id[trade['currencyPair']]['symbol'];
         if (market)
             symbol = market['symbol'];
+        let side = trade['type'];
+        let fee = undefined;
+        if ('fee' in trade) {
+            let currency = (side == 'buy') ? market['base'] : market['quote'];
+            fee = {
+                'cost': parseFloat (trade['fee']),
+                'currency': currency,
+            };
+        }
         return {
             'info': trade,
             'timestamp': timestamp,
@@ -42317,9 +44646,10 @@ module.exports = class poloniex extends Exchange {
             'id': this.safeString (trade, 'tradeID'),
             'order': this.safeString (trade, 'orderNumber'),
             'type': 'limit',
-            'side': trade['type'],
+            'side': side,
             'price': parseFloat (trade['rate']),
             'amount': parseFloat (trade['amount']),
+            'fee': fee,
         };
     }
 
@@ -42328,10 +44658,11 @@ module.exports = class poloniex extends Exchange {
         let market = this.market (symbol);
         let request = {
             'currencyPair': market['id'],
-            'end': this.seconds (), // last 50000 trades by default
         };
-        if (since)
+        if (since) {
             request['start'] = parseInt (since / 1000);
+            request['end'] = this.seconds (); // last 50000 trades by default
+        }
         let trades = await this.publicGetReturnTradeHistory (this.extend (request, params));
         return this.parseTrades (trades, market);
     }
@@ -42610,6 +44941,7 @@ module.exports = class poloniex extends Exchange {
         if (api == 'public') {
             url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             query['nonce'] = this.nonce ();
             body = this.urlencode (query);
             headers = {
@@ -42769,6 +45101,25 @@ module.exports = class yobit extends liqui {
             'id': undefined,
         };
     }
+
+    async request (path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined) {
+        let response = await this.fetch2 (path, api, method, params, headers, body);
+        if ('success' in response) {
+            if (!response['success']) {
+                if (response['error'].indexOf ('Insufficient funds') >= 0) { // not enougTh is a typo inside Liqui's own API...
+                    throw new InsufficientFunds (this.id + ' ' + this.json (response));
+                } else if (response['error'] == 'Requests too often') {
+                    throw new DDoSProtection (this.id + ' ' + this.json (response));
+                } else if ((response['error'] == 'not available') || (response['error'] == 'external service unavailable')) {
+                    throw new DDoSProtection (this.id + ' ' + this.json (response));
+                } else {
+                    throw new ExchangeError (this.id + ' ' + this.json (response));
+                }
+            }
+        }
+        return response;
+    }
+
 }
 
 
@@ -42802,6 +45153,11 @@ module.exports = class bitstamp1 extends Exchange {
                 'api': 'https://www.bitstamp.net/api',
                 'www': 'https://www.bitstamp.net',
                 'doc': 'https://www.bitstamp.net/api',
+            },
+            'requiredCredentials': {
+                'apiKey': true,
+                'secret': true,
+                'uid': true,
             },
             'api': {
                 'public': {
@@ -42948,9 +45304,10 @@ module.exports = class bitstamp1 extends Exchange {
     async createOrder (symbol, type, side, amount, price = undefined, params = {}) {
         if (type != 'limit')
             throw new ExchangeError (this.id + ' ' + this.version + ' accepts limit orders only');
+        if (symbol != 'BTC/USD')
+            throw new ExchangeError (this.id + ' v1 supports BTC/USD orders only');
         let method = 'privatePost' + this.capitalize (side);
         let order = {
-            'id': this.marketId (symbol),
             'amount': amount,
             'price': price,
         };
@@ -43002,8 +45359,7 @@ module.exports = class bitstamp1 extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
-            if (!this.uid)
-                throw new AuthenticationError (this.id + ' requires `' + this.id + '.uid` property for authentication');
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             let auth = nonce + this.uid + this.apiKey;
             let signature = this.encode (this.hmac (this.encode (auth), this.encode (this.secret)));
@@ -43233,6 +45589,7 @@ module.exports = class btcbox extends Exchange {
             if (Object.keys (params).length)
                 url += '?' + this.urlencode (params);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             let query = this.extend ({
                 'key': this.apiKey,
@@ -43270,7 +45627,7 @@ module.exports = class btcbox extends Exchange {
 //  ---------------------------------------------------------------------------
 
 const Exchange = __webpack_require__ ("PJ5r")
-const { ExchangeNotAvailable, ExchangeError, OrderNotFound, DDoSProtection, InvalidNonce, InsufficientFunds } = __webpack_require__ ("AnAA")
+const { ExchangeNotAvailable, ExchangeError, OrderNotFound, DDoSProtection, InvalidNonce, InsufficientFunds, CancelPending } = __webpack_require__ ("AnAA")
 
 //  ---------------------------------------------------------------------------
 
@@ -43378,6 +45735,8 @@ module.exports = class kraken extends Exchange {
             throw new InvalidNonce (this.id + ' ' + body);
         if (body.indexOf ('Insufficient funds') >= 0)
             throw new InsufficientFunds (this.id + ' ' + body);
+        if (body.indexOf ('Cancel pending') >= 0)
+            throw new CancelPending (this.id + ' ' + body);
     }
 
     async fetchMarkets () {
@@ -43483,6 +45842,9 @@ module.exports = class kraken extends Exchange {
         let symbol = undefined;
         if (market)
             symbol = market['symbol'];
+        let baseVolume = parseFloat (ticker['v'][1]);
+        let vwap = parseFloat (ticker['p'][1]);
+        let quoteVolume = baseVolume * vwap;
         return {
             'symbol': symbol,
             'timestamp': timestamp,
@@ -43491,7 +45853,7 @@ module.exports = class kraken extends Exchange {
             'low': parseFloat (ticker['l'][1]),
             'bid': parseFloat (ticker['b'][0]),
             'ask': parseFloat (ticker['a'][0]),
-            'vwap': parseFloat (ticker['p'][1]),
+            'vwap': vwap,
             'open': parseFloat (ticker['o']),
             'close': undefined,
             'first': undefined,
@@ -43499,8 +45861,8 @@ module.exports = class kraken extends Exchange {
             'change': undefined,
             'percentage': undefined,
             'average': undefined,
-            'baseVolume': parseFloat (ticker['v'][1]),
-            'quoteVolume': undefined,
+            'baseVolume': baseVolume,
+            'quoteVolume': quoteVolume,
             'info': ticker,
         };
     }
@@ -43578,6 +45940,7 @@ module.exports = class kraken extends Exchange {
         let amount = undefined;
         let id = undefined;
         let order = undefined;
+        let fee = undefined;
         if (!market)
             market = this.findMarketByAltnameOrId (trade['pair']);
         if ('ordertxid' in trade) {
@@ -43588,6 +45951,15 @@ module.exports = class kraken extends Exchange {
             type = trade['ordertype'];
             price = parseFloat (trade['price']);
             amount = parseFloat (trade['vol']);
+            if ('fee' in trade) {
+                let currency = undefined;
+                if (market)
+                    currency = market['quote'];
+                fee = {
+                    'cost': parseFloat (trade['fee']),
+                    'currency': currency,
+                };
+            }
         } else {
             timestamp = parseInt (trade[2] * 1000);
             side = (trade[3] == 's') ? 'sell' : 'buy';
@@ -43607,6 +45979,7 @@ module.exports = class kraken extends Exchange {
             'side': side,
             'price': price,
             'amount': amount,
+            'fee': fee,
         };
     }
 
@@ -43830,6 +46203,7 @@ module.exports = class kraken extends Exchange {
             if (Object.keys (params).length)
                 url += '?' + this.urlencode (params);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             body = this.urlencode (this.extend ({ 'nonce': nonce }, params));
             let auth = this.encode (nonce + body);
@@ -44308,20 +46682,23 @@ module.exports = class bitfinex2 extends bitfinex {
 
     async fetchBalance (params = {}) {
         let response = await this.privatePostAuthRWallets ();
+        let balanceType = this.safeString (params, 'type', 'exchange');
         let result = { 'info': response };
         for (let b = 0; b < response.length; b++) {
             let balance = response[b];
-            let [ type, currency, total, interest, available ] = balance;
-            if (currency[0] == 't')
-                currency = currency.slice (1);
-            let uppercase = currency.toUpperCase ();
-            uppercase = this.commonCurrencyCode (uppercase);
-            let account = this.account ();
-            account['free'] = available;
-            account['total'] = total;
-            if (account['free'])
-                account['used'] = account['total'] - account['free'];
-            result[uppercase] = account;
+            let [ accountType, currency, total, interest, available ] = balance;
+            if (accountType == balanceType) {
+                if (currency[0] == 't')
+                    currency = currency.slice (1);
+                let uppercase = currency.toUpperCase ();
+                uppercase = this.commonCurrencyCode (uppercase);
+                let account = this.account ();
+                account['free'] = available;
+                account['total'] = total;
+                if (account['free'])
+                    account['used'] = account['total'] - account['free'];
+                result[uppercase] = account;
+            }
         }
         return this.parseBalance (result);
     }
@@ -44466,9 +46843,11 @@ module.exports = class bitfinex2 extends bitfinex {
         let query = this.omit (params, this.extractParams (path));
         let url = this.urls['api'] + '/' + request;
         if (api == 'public') {
-            if (Object.keys (query).length)
+            if (Object.keys (query).length) {
                 url += '?' + this.urlencode (query);
+            }
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             body = this.json (query);
             let auth = '/api' + '/' + request + nonce + body;
@@ -44492,8 +46871,10 @@ module.exports = class bitfinex2 extends bitfinex {
                 throw new ExchangeError (this.id + ' ' + this.json (response));
             }
             return response;
+        } else if (response == '') {
+            throw new ExchangeError (this.id + ' returned empty response');
         }
-        throw new ExchangeError (this.id + ' returned empty response');
+        return response;
     }
 }
 
@@ -44751,6 +47132,7 @@ module.exports = class nova extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             url += '?' + this.urlencode ({ 'nonce': nonce });
             let signature = this.hmac (this.encode (url), this.encode (this.secret), 'sha512', 'base64');
@@ -45381,6 +47763,12 @@ module.exports = class lakebtc extends Exchange {
                     ],
                 },
             },
+            'fees': {
+                'trading': {
+                    'maker': 0.15 / 100,
+                    'taker': 0.2 / 100,
+                },
+            },
         });
     }
 
@@ -45510,6 +47898,10 @@ module.exports = class lakebtc extends Exchange {
         return await this.privatePostCancelOrder ({ 'params': id });
     }
 
+    nonce () {
+        return this.microseconds ();
+    }
+
     sign (path, api = 'public', method = 'GET', params = {}, headers = undefined, body = undefined) {
         let url = this.urls['api'] + '/' + this.version;
         if (api == 'public') {
@@ -45517,6 +47909,7 @@ module.exports = class lakebtc extends Exchange {
             if (Object.keys (params).length)
                 url += '?' + this.urlencode (params);
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             if (Object.keys (params).length)
                 params = params.join (',');
@@ -45535,10 +47928,11 @@ module.exports = class lakebtc extends Exchange {
                 'params': params,
                 'id': nonce,
             });
-            let signature = this.hmac (this.encode (query), this.secret, 'sha1', 'base64');
+            let signature = this.hmac (this.encode (query), this.encode (this.secret), 'sha1');
+            let auth = this.encode (this.apiKey + ':' + signature);
             headers = {
                 'Json-Rpc-Tonce': nonce,
-                'Authorization': "Basic " + this.apiKey + ':' + signature,
+                'Authorization': "Basic " + this.decode (this.stringToBase64 (auth)),
                 'Content-Type': 'application/json',
             };
         }
@@ -45585,6 +47979,11 @@ module.exports = class quadrigacx extends Exchange {
                 'www': 'https://www.quadrigacx.com',
                 'doc': 'https://www.quadrigacx.com/api_info',
             },
+            'requiredCredentials': {
+                'apiKey': true,
+                'secret': true,
+                'uid': true,
+            },
             'api': {
                 'public': {
                     'get': [
@@ -45610,10 +48009,12 @@ module.exports = class quadrigacx extends Exchange {
                 },
             },
             'markets': {
-                'BTC/CAD': { 'id': 'btc_cad', 'symbol': 'BTC/CAD', 'base': 'BTC', 'quote': 'CAD' },
-                'BTC/USD': { 'id': 'btc_usd', 'symbol': 'BTC/USD', 'base': 'BTC', 'quote': 'USD' },
-                'ETH/BTC': { 'id': 'eth_btc', 'symbol': 'ETH/BTC', 'base': 'ETH', 'quote': 'BTC' },
-                'ETH/CAD': { 'id': 'eth_cad', 'symbol': 'ETH/CAD', 'base': 'ETH', 'quote': 'CAD' },
+                'BTC/CAD': { 'id': 'btc_cad', 'symbol': 'BTC/CAD', 'base': 'BTC', 'quote': 'CAD', 'maker': 0.005, 'taker': 0.005 },
+                'BTC/USD': { 'id': 'btc_usd', 'symbol': 'BTC/USD', 'base': 'BTC', 'quote': 'USD', 'maker': 0.005, 'taker': 0.005 },
+                'ETH/BTC': { 'id': 'eth_btc', 'symbol': 'ETH/BTC', 'base': 'ETH', 'quote': 'BTC', 'maker': 0.002, 'taker': 0.002 },
+                'ETH/CAD': { 'id': 'eth_cad', 'symbol': 'ETH/CAD', 'base': 'ETH', 'quote': 'CAD', 'maker': 0.005, 'taker': 0.005 },
+                'LTC/CAD': { 'id': 'ltc_cad', 'symbol': 'LTC/CAD', 'base': 'LTC', 'quote': 'CAD', 'maker': 0.005, 'taker': 0.005 },
+                'BCH/CAD': { 'id': 'btc_cad', 'symbol': 'BCH/CAD', 'base': 'BCH', 'quote': 'CAD', 'maker': 0.005, 'taker': 0.005 },
             },
         });
     }
@@ -45722,8 +48123,7 @@ module.exports = class quadrigacx extends Exchange {
         if (api == 'public') {
             url += '?' + this.urlencode (params);
         } else {
-            if (!this.uid)
-                throw new AuthenticationError (this.id + ' requires `' + this.id + '.uid` property for authentication');
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             let request = [ nonce.toString (), this.uid, this.apiKey ].join ('');
             let signature = this.hmac (this.encode (request), this.encode (this.secret));
@@ -46316,6 +48716,12 @@ module.exports = class therock extends Exchange {
                     ],
                 },
             },
+            'fees': {
+                'trading': {
+                    'maker': 0.02 / 100,
+                    'taker': 0.2 / 100,
+                },
+            },
         });
     }
 
@@ -46475,6 +48881,7 @@ module.exports = class therock extends Exchange {
         let url = this.urls['api'] + '/' + this.version + '/' + this.implodeParams (path, params);
         let query = this.omit (params, this.extractParams (path));
         if (api == 'private') {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ().toString ();
             let auth = nonce + url;
             headers = {
@@ -46699,6 +49106,7 @@ module.exports = class vaultoro extends Exchange {
         if (api == 'public') {
             url += path;
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             url += this.version + '/' + this.implodeParams (path, params);
             let query = this.extend ({
@@ -46887,6 +49295,12 @@ module.exports = class bit2c extends Exchange {
                 'BCH/NIS': { 'id': 'BchNis', 'symbol': 'BCH/NIS', 'base': 'BCH', 'quote': 'NIS' },
                 'LTC/NIS': { 'id': 'LtcNis', 'symbol': 'LTC/NIS', 'base': 'LTC', 'quote': 'NIS' },
             },
+            'fees': {
+                'trading': {
+                    'maker': 0.5 / 100,
+                    'taker': 0.5 / 100,
+                },
+            },
         });
     }
 
@@ -47000,6 +49414,7 @@ module.exports = class bit2c extends Exchange {
         if (api == 'public') {
             url += '.json';
         } else {
+            this.checkRequiredCredentials ();
             let nonce = this.nonce ();
             let query = this.extend ({ 'nonce': nonce }, params);
             body = this.urlencode (query);
@@ -47048,6 +49463,10 @@ module.exports = class bitlish extends Exchange {
                 'api': 'https://bitlish.com/api',
                 'www': 'https://bitlish.com',
                 'doc': 'https://bitlish.com/api',
+            },
+            'requiredCredentials': {
+                'apiKey': true,
+                'secret': false,
             },
             'api': {
                 'public': {
@@ -47140,22 +49559,26 @@ module.exports = class bitlish extends Exchange {
 
     parseTicker (ticker, market) {
         let timestamp = this.milliseconds ();
+        let symbol = undefined;
+        if (market)
+            symbol = market['symbol'];
         return {
             'timestamp': timestamp,
             'datetime': this.iso8601 (timestamp),
+            'symbol': symbol,
             'high': this.safeFloat (ticker, 'max'),
             'low': this.safeFloat (ticker, 'min'),
-            'bid': this.safeFloat (ticker, 'min'),
-            'ask': this.safeFloat (ticker, 'max'),
+            'bid': undefined,
+            'ask': undefined,
             'vwap': undefined,
             'open': undefined,
             'close': undefined,
             'first': this.safeFloat (ticker, 'first'),
             'last': this.safeFloat (ticker, 'last'),
             'change': undefined,
-            'percentage': undefined,
+            'percentage': this.safeFloat (ticker, 'prc'),
             'average': undefined,
-            'baseVolume': undefined,
+            'baseVolume': this.safeFloat (ticker, 'sum'),
             'quoteVolume': undefined,
             'info': ticker,
         };
@@ -47319,12 +49742,14 @@ module.exports = class bitlish extends Exchange {
                 headers = { 'Content-Type': 'application/json' };
             }
         } else {
+            this.checkRequiredCredentials ();
             body = this.json (this.extend ({ 'token': this.apiKey }, params));
             headers = { 'Content-Type': 'application/json' };
         }
         return { 'url': url, 'method': method, 'body': body, 'headers': headers };
     }
 }
+
 
 /***/ }),
 
@@ -47614,7 +50039,7 @@ function toFixed (x) { // avoid scientific notation for too large and too small 
             x = '0.' + (new Array (e)).join ('0') + x.toString ().substring (2)
         }
     } else {
-        const e = parseInt (x.toString ().split ('+')[1])
+        let e = parseInt (x.toString ().split ('+')[1])
         if (e > 20) {
             e -= 20
             x /= Math.pow (10, e)
@@ -47864,6 +50289,11 @@ module.exports = class xbtce extends Exchange {
                     'https://www.xbtce.com/tradeapi',
                     'https://support.xbtce.info/Knowledgebase/Article/View/52/25/xbtce-exchange-api',
                 ],
+            },
+            'requiredCredentials': {
+                'apiKey': true,
+                'secret': true,
+                'uid': true,
             },
             'api': {
                 'public': {
@@ -48139,7 +50569,7 @@ module.exports = class xbtce extends Exchange {
         if (!this.apiKey)
             throw new AuthenticationError (this.id + ' requires apiKey for all requests, their public API is always busy');
         if (!this.uid)
-            throw new AuthenticationError (this.id + ' requires uid property for authentication and trading');
+            throw new AuthenticationError (this.id + ' requires uid property for authentication and trading, their public API is always busy');
         let url = this.urls['api'] + '/' + this.version;
         if (api == 'public')
             url += '/' + api;
@@ -48149,15 +50579,16 @@ module.exports = class xbtce extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             headers = { 'Accept-Encoding': 'gzip, deflate' };
             let nonce = this.nonce ().toString ();
             if (method == 'POST') {
                 if (Object.keys (query).length) {
                     headers['Content-Type'] = 'application/json';
                     body = this.json (query);
-                }
-                else
+                } else {
                     url += '?' + this.urlencode (query);
+                }
             }
             let auth = nonce + this.uid + this.apiKey + method + url;
             if (body)
@@ -48544,6 +50975,12 @@ module.exports = class bitbay extends Exchange {
                 'LSK/PLN': { 'id': 'LSKPLN', 'symbol': 'LSK/PLN', 'base': 'LSK', 'quote': 'PLN' },
                 'LSK/BTC': { 'id': 'LSKBTC', 'symbol': 'LSK/BTC', 'base': 'LSK', 'quote': 'BTC' },
             },
+            'fees': {
+                'trading': {
+                    'maker': 0.3 / 100,
+                    'taker': 0.0043,
+                },
+            },
         });
     }
 
@@ -48681,6 +51118,7 @@ module.exports = class bitbay extends Exchange {
         if (api == 'public') {
             url += '/' + this.implodeParams (path, params) + '.json';
         } else {
+            this.checkRequiredCredentials ();
             body = this.urlencode (this.extend ({
                 'method': path,
                 'moment': this.nonce (),
@@ -48791,6 +51229,12 @@ module.exports = class paymium extends Exchange {
             },
             'markets': {
                 'BTC/EUR': { 'id': 'eur', 'symbol': 'BTC/EUR', 'base': 'BTC', 'quote': 'EUR' },
+            },
+            'fees': {
+                'trading': {
+                    'maker': 0.0059,
+                    'taker': 0.0059,
+                },
             },
         });
     }
@@ -48907,6 +51351,7 @@ module.exports = class paymium extends Exchange {
             if (Object.keys (query).length)
                 url += '?' + this.urlencode (query);
         } else {
+            this.checkRequiredCredentials ();
             body = this.json (params);
             let nonce = this.nonce ().toString ();
             let auth = nonce + url + body;
@@ -48932,4 +51377,4 @@ module.exports = class paymium extends Exchange {
 /***/ })
 
 });
-//# sourceMappingURL=vendor.fcab75c4f94fe2a47667.js.map
+//# sourceMappingURL=vendor.554f5bcb2ce087482931.js.map

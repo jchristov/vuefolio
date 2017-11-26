@@ -43,5 +43,8 @@ new Vue({
   components: { App },
   // pass in the router to the Vue instance
   router: router,
-  store: store
+  store: store,
+  mounted: function () {
+    this.$store.dispatch('syncExchangeRates')
+  }
 }).$mount('#app')// mount the router on the app

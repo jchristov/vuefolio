@@ -1,65 +1,35 @@
 <template>
   <div id="manual">
-    <h1>{{wtf}}</h1>
+    <p>Manually enter balances for tokens held in wallets or on exchanges that are not supported</p> 
+    <p>
+      <i class="fa fa-trash-o fa-2x" aria-hidden="true" v-on:click="deleteManualBalances"></i>
+    </p>
     <table>
-      <tbody>
-        <tr class="blank_row"/>
-        <tr class="blank_row"/>
-        <tr>
-          <td colspan="3"> 
-          <i class="fa fa-trash-o fa-2x" aria-hidden="true" v-on:click="deleteManualEntries"></i>
-          </td>
-        </tr>
-        <tr class="blank_row">
-        <tr v-for="item in manualBalances">
-          <td><input class="input" type="text" placeholder="Description" v-model="item.description" v-on:change="changeManualEntry(item)"></td>
-          <td><input class="input" type="text" placeholder="Token" v-model="item.token" v-on:change="changeManualEntry(item)"></td>
-          <td><input class="input" type="text" placeholder="Balance" v-model="item.balance" v-on:change="changeManualEntry(item)"></td>
-        </tr>
-      </tbody>
+      <tr v-for="item in manualBalances">
+        <td><input class="input" type="text" placeholder="Description" v-model="item.description"></td>
+        <td><input class="input" type="text" placeholder="Token" v-model="item.token" v-on:change="syncManualBalances(item)"></td>
+        <td><input class="input" type="text" placeholder="Balance" v-model="item.balance" v-on:change="syncManualBalances(item)"></td>
+      </tr>
     </table>
   </div>
 </template>
 
 <script>
-
-function loadManualEntries () {
-  if (localStorage.manualBalances) {
-    return JSON.parse(localStorage.getItem('manualBalances'))
-  } else {
-    return [{'description': '', 'token': '', 'balance': ''}]
-  }
-}
+import {mapGetters} from 'vuex'
 
 export default {
-  data () {
-    return {
-      manualBalances: loadManualEntries()
-    }
-  },
-  props: ['wtf'],
   name: 'Manual',
+  computed: mapGetters({
+    manualBalances: 'getManualBalances'
+  }),
   methods: {
-    changeManualEntry (item) {
-      // Remove input line after emptying
-      if ((item.description === '') && (item.token === '') && (item.balance === '')) {
-        var index = this.manualBalances.indexOf(item)
-        this.manualBalances.splice(index, 1)
-        localStorage.setItem('manualBalances', JSON.stringify(this.manualBalances))
-      }
-      // Add line only when all three inputs are filled
-      if ((item.description !== '') && (item.token !== '') && (item.balance !== '')) {
-        if (this.manualBalances.indexOf(item) === (this.manualBalances.length - 1)) {
-          this.manualBalances.push({'description': '', 'token': '', 'balance': ''})
-          localStorage.setItem('manualBalances', JSON.stringify(this.manualBalances))
-        }
+    syncManualBalances (item) {
+      if (item.token && item.balance) {
+        this.$store.dispatch('syncManualBalances', item)
       }
     },
-    deleteManualEntries () {
-      // localStorage.removeItem('manualBalances')
-      // this.manualBalances = loadManualEntries()
-      this.manualBalances = [{'description': '', 'token': '', 'balance': ''}]
-      localStorage.setItem('manualBalances', JSON.stringify(this.manualBalances))
+    deleteManualBalances () {
+      this.$store.dispatch('deleteManualBalances')
     }
   }
 }
@@ -78,7 +48,6 @@ td {
 }
 
 table{
-  /* margin: auto; */
   width: 40%;
 }
 </style>

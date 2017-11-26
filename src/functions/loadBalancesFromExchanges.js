@@ -10,7 +10,7 @@ export default async function loadBalancesFromExchanges (exchangeKeys) {
   //     }
   var exchangeKeysFormatted = {}
 
-  exchangeKeys.forEach(function (exchange, index) {
+  exchangeKeys.forEach(exchange => {
     exchangeKeysFormatted[exchange.name] = {}
     exchangeKeysFormatted[exchange.name]['apiKey'] = exchange.apiKey
     exchangeKeysFormatted[exchange.name]['secret'] = exchange.apiSecret
@@ -18,11 +18,8 @@ export default async function loadBalancesFromExchanges (exchangeKeys) {
   }
   )
 
-  console.log(exchangeKeysFormatted)
   var exchangeBalances = {}
   let ids = ccxt.exchanges.filter(id => id in exchangeKeysFormatted)
-
-  console.log(ids)
 
   await Promise.all(ids.map(async id => {
     let exchange = new ccxt[id](exchangeKeysFormatted[id])
@@ -42,6 +39,7 @@ export default async function loadBalancesFromExchanges (exchangeKeys) {
   )
   )
 //   when all of them are ready, do your other things
-  console.log('Loaded exchanges:', ids.join(', '))
-  localStorage.setItem('exchangeBalances', JSON.stringify(exchangeBalances))
+  // console.log('Loaded exchanges:', ids.join(', '))
+  // localStorage.setItem('exchangeBalances', JSON.stringify(exchangeBalances))
+  return exchangeBalances
 }

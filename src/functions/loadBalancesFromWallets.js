@@ -53,6 +53,5 @@ export default async function loadBalancesFromWallets (walletKeys) {
   //   }
   // }
   // )
-
-  localStorage.setItem('walletBalances', JSON.stringify(walletBalances))
+  return walletBalances
 }

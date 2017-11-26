@@ -1,9 +1,6 @@
 export default function combineBalances (wallets, exchanges, manual) {
   // Input: jsons that contain balances for exchanges and wallets separately
   // Output: json that contains the combined balance for each token
-  console.log(wallets)
-  console.log(exchanges)
-  console.log(manual)
 
   var combined = {}
   // Add balances from exchanges

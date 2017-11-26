@@ -1,61 +1,40 @@
 <template>
   <div id="exchanges">
     <p>Overview of cryptocurrencies held on different exchanges</p>
-  <table v-if="(exchangeBalances !== null)">
-    <tbody>
+  <table v-if="exchangeBalances">
 
-      <tr>
-        <th class="header" v-for="item in exchangeKeys.slice(0,4)">
-          {{item.name | capitalizeFirstLetter}}
-        </th>
-      </tr>
-
-      <tr>
-        <td v-for="item in exchangeKeys.slice(0,4)" v-if="exchangeBalances[item.name]">
-          <table class="subtable">
-            <tr class="blank_row"></tr> 
-            <tr class="balances" v-for="(balance,token) in exchangeBalances[item.name]">
-                <td class="str">{{token}}</td>
-                <td class="nr">{{balance | round(3)}}</td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-
-      <tr>
-        <th class="header" v-for="item in exchangeKeys.slice(4,8)">
-          <p>{{item.name | capitalizeFirstLetter}}</p>
-        </th>
-      </tr>
-
-      <tr>
-        <td v-for="item in exchangeKeys.slice(4,8)" v-if="exchangeBalances[item.name]">
-          <table class="subtable">
-            <tr class="blank_row"></tr> 
-            <tr class="balances" v-for="(balance,token) in exchangeBalances[item.name]">
-                <td class="str">{{token}}</td>
-                <td class="nr">{{balance | round(3)}}</td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-
-    </tbody>
+    <!-- Display Exchange Balances -->
+    <tr v-for="i in Math.ceil(Object.keys(exchangeBalances).length / 4)">
+      <td v-for="exchangeName in Object.keys(exchangeBalances).slice((i - 1) * 4, i * 4)">
+        <table class="subtable">
+          <th class="header">
+            {{exchangeName | capitalizeFirstLetter}}
+          </th>
+          <tr class="blank_row"></tr>
+          <tr class="blank_row"></tr>
+          <tr class="balances" v-for="(balance,token) in exchangeBalances[exchangeName]">
+            <td class="str">{{token}}</td>
+            <td class="nr">{{balance | round(3)}}</td>
+          </tr>
+          <tr class="blank_row"></tr>
+          <tr class="blank_row"></tr>
+        </table>
+      </td>
+    </tr>
+    
   </table>  
   </div>
 </template>
 
 <script>
-import loadExchangeKeys from '../functions/loadExchangeKeys.js'
+import {mapGetters} from 'vuex'
 
 export default {
   name: 'exchanges',
-  data () {
-    return {
-      exchangeBalances: JSON.parse(localStorage.getItem('exchangeBalances')),
-      exchangeKeys: loadExchangeKeys()
-    }
-  },
+  computed: mapGetters({
+    exchangeBalances: 'getExchangeBalances',
+    exchangeKeys: 'getExchangeKeys'
+  }),
   filters: {
     capitalizeFirstLetter: function (string) {
       return string.charAt(0).toUpperCase() + string.slice(1)
@@ -69,10 +48,7 @@ export default {
 
 <style scoped>
 .header {
-    /* text-decoration: underline; */
-    /* border-bottom: 2px; */
     text-align: center;
-    
 }
 
 table{
