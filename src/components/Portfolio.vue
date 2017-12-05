@@ -1,7 +1,7 @@
 <template>
   <div class="hello">
     <span v-if="(myPortfolio !== null)">
-      <PortfolioTable :portfolio="myPortfolio[baseCurrency]" :currency="baseCurrency"/>
+      <PortfolioTable :portfolio="myPortfolio" :currency="baseCurrency"/>
       <p>Switch base currency:</p>
       <p>
         <button @click="(event) => { switchBaseCurrency(event, 'BTC') }">BTC</button>

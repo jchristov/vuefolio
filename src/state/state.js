@@ -22,6 +22,7 @@ export const store = new Vuex.Store({
       manual: loadManualBalances()
     },
     portfolio: null, // Combined balances + exchange rates, gets updated after call to "syncExchangeRates",
+    currencies: ['EUR', 'USD', 'BTC', 'ETH'],
     baseCurrency: localStorage.baseCurrency ? localStorage.baseCurrency : 'EUR'
   },
   getters: {
@@ -45,6 +46,20 @@ export const store = new Vuex.Store({
     },
     getBaseCurrency: function (state) {
       return state.baseCurrency
+    },
+    getTotal: function (state) {
+      var currencies = state.currencies
+      var total = {}
+
+      if (state.portfolio !== null) {
+        currencies.forEach(cur => {
+          total[cur] = 0.0
+          state.portfolio[cur].forEach(function (tokenInfo) {
+            total[cur] += tokenInfo['holding']
+          })
+        })
+      }
+      return total
     }
   },
   mutations: {
@@ -122,7 +137,7 @@ export const store = new Vuex.Store({
       const rates = payload.rates
 
       var portfolio = {}
-      var currencies = ['EUR', 'USD', 'BTC', 'ETH']
+      var currencies = state.currencies
 
       currencies.forEach(cur => {
         portfolio[cur] = []
