@@ -14,7 +14,7 @@ export default async function loadBalancesFromExchanges (exchangeKeys) {
     exchangeKeysFormatted[exchange.name] = {}
     exchangeKeysFormatted[exchange.name]['apiKey'] = exchange.apiKey
     exchangeKeysFormatted[exchange.name]['secret'] = exchange.apiSecret
-    // exchangeKeysFormatted[exchange.name]['proxy'] = 'https://cors-anywhere.herokuapp.com/'
+    exchangeKeysFormatted[exchange.name]['proxy'] = 'https://cors-anywhere.herokuapp.com/'
   }
   )
 
