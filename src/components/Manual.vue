@@ -24,9 +24,10 @@ export default {
   }),
   methods: {
     syncManualBalances (item) {
-      if (item.token && item.balance) {
-        this.$store.dispatch('syncManualBalances', item)
-      }
+      this.$store.dispatch('syncManualBalances', item)
+      // if (item.token && item.balance) {
+      //   this.$store.dispatch('syncManualBalances', item)
+      // }
     },
     deleteManualBalances () {
       this.$store.dispatch('deleteManualBalances')

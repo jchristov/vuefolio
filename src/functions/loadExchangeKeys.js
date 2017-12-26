@@ -10,7 +10,9 @@ export default function loadExchangeKeys () {
     {'name': 'coinbase', 'apiKey': '', 'apiSecret': ''},
     {'name': 'bl3p', 'apiKey': '', 'apiSecret': ''},
     {'name': 'bitfinex2', 'apiKey': '', 'apiSecret': ''},
-    {'name': 'poloniex', 'apiKey': '', 'apiSecret': ''}
+    {'name': 'poloniex', 'apiKey': '', 'apiSecret': ''},
+    {'name': 'gdax', 'apiKey': '', 'apiSecret': ''},
+    {'name': 'binance', 'apiKey': '', 'apiSecret': ''}
     ]
   }
   return exchangeKeys

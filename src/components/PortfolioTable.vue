@@ -19,7 +19,7 @@
           <th class="str"></th>
           <th class="str">Name</th>
           <th class="nr">Balance</th>
-          <th class="nr">Price {{currenct}}</th>
+          <th class="nr">Price {{currency}}</th>
           <th class="nr">Holding {{currency}}</th>
           <th class="nr">24h% Change</th>
         </tr>

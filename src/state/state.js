@@ -127,6 +127,7 @@ export const store = new Vuex.Store({
 
       // Remove input line after emptying
       if ((item.description === '') && (item.token === '') && (item.balance === '')) {
+        console.log('remove line plz')
         state.balances.manual.splice(index, 1)
 
         localStorage.setItem('manualBalances', JSON.stringify(state.balances.manual))
