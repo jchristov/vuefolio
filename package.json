@@ -14,7 +14,7 @@
     "lint": "eslint --ext .js,.vue src test/unit/specs test/e2e/specs"
   },
   "dependencies": {
-    "ccxt": "^1.10.477",
+    "ccxt": "^1.10.521",
     "express": "^4.16.2",
     "server": "^1.0.12",
     "vue": "^2.5.6",
@@ -89,8 +89,8 @@
     "webpack-merge": "^4.1.1"
   },
   "engines": {
-    "node": "9.3.0",
-    "npm": "5.6.0"
+    "node": "9.2.1",
+    "npm": "5.5.1"
   },
   "browserslist": [
     "> 1%",

@@ -40,7 +40,7 @@ export default {
       return string.charAt(0).toUpperCase() + string.slice(1)
     },
     round: function (value, decimals) {
-      return value.toFixed(decimals)
+      return parseFloat(value).toFixed(decimals)
     }
   }
 }

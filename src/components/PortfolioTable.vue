@@ -75,7 +75,8 @@ export default {
   },
   filters: {
     round: function (value, decimals) {
-      return value.toFixed(decimals)
+      // Sometimes value is a string rather than a float so need to parseFloat it first
+      return parseFloat(value).toFixed(decimals)
     }
   }
 }

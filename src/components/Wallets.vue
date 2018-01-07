@@ -67,7 +67,7 @@ export default {
       return trimStr
     },
     round: function (value, decimals) {
-      return value.toFixed(decimals)
+      return parseFloat(value).toFixed(decimals)
     }
   }
 }
