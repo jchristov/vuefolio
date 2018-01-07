@@ -2,7 +2,7 @@
   <div id="portfoliotable">
     <!-- <h1> Total: </h1> -->
     <table class="thin">
-     
+     asdhasdiuasdaiusdhasud
        <tr><td rowspan="4">Total:</td><td class="nr">{{totalValue['BTC'] | round(3)}} BTC</td></tr>
        <tr><td class="nr">{{totalValue['EUR'] | round(0)}} EUR</td></tr>
        <tr><td class="nr">{{totalValue['ETH'] | round(3)}} ETH</td></tr>
