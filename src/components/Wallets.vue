@@ -14,9 +14,9 @@
           </th>
           <tr>
             <table class="subtable" v-for="(balances, address) in walletBalances[walletName]">
-              <tr class="blank_row"></tr> 
+              <tr class="blank_row"></tr>
                 <td colspan="2" :title="address" class="str address">
-                  <a href="http://etherscan.io/address/ + address">
+                  <a :href="pageUrl(address, walletName)">
                     <div style="height:100%;width:100%">
                       {{address | trimString(22)}}
                     </div>          
@@ -51,6 +51,13 @@ export default {
   methods: {
     getIcon (token) {
       return getIcon(token)
+    },
+    pageUrl (address, walletName) {
+      var url
+      if (walletName === 'ethereum') {
+        url = 'http://etherscan.io/address/' + address
+      }
+      return url
     }
   },
   filters: {
