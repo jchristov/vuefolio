@@ -16,6 +16,7 @@
   "dependencies": {
     "ccxt": "^1.10.1137",
     "express": "^4.16.2",
+    "npm": "^5.7.1",
     "server": "^1.0.18",
     "vue": "^2.5.13",
     "vue-async-computed": "^3.3.1",
