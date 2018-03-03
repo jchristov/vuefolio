@@ -33,6 +33,21 @@ export default async function loadBalancesFromExchanges (exchangeKeys) {
           exchangeBalances[id][token] = balance['total'][token]
         }
       }
+
+      // For Bitfinex, by default only balances in "exchange" wallets are retrieved, we need to manually add "funding" stuff as well
+      if (id === 'bitfinex2') {
+        let balance = await exchange.fetchBalance({'type': 'funding'})
+        console.log(balance)
+        for (let token in balance['total']) {
+          if (balance['total'][token] !== 0) {
+            if (exchangeBalances[id][token] > 0) {
+              exchangeBalances[id][token] += balance['total'][token]
+            } else {
+              exchangeBalances[id][token] = balance['total'][token]
+            }
+          }
+        }
+      }
     }
     return exchange
   }
